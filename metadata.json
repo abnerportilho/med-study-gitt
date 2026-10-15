@@ -1,0 +1,8 @@
+{
+  "name": "Remix: ESTUDO GERAL ",
+  "description": "Plataforma interativa de protocolos clínicos médicos, incluindo Distopias Genitais e Incontinência Urinária (Uroginecologia), Câncer de Mama, Doenças Benignas da Mama, Exame de Imagem na Obstetrícia, TPP e Amniorrexe (RPMO), DMG, Ginecologia e Clínica Médica.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  
+  --color-bg-blue: var(--bg-blue);
+  --color-bg-red: var(--bg-red);
+  --color-bg-orange: var(--bg-orange);
+  --color-bg-green: var(--bg-green);
+  --color-bg-teal: var(--bg-teal);
+  --color-bg-purple: var(--bg-purple);
+
+  --color-brand-blue: #3b82f6;
+  --color-brand-pink: #f43f5e;
+  --color-brand-orange: #f97316;
+  --color-brand-yellow: #eab308;
+  --color-brand-navy: var(--brand-navy);
+}
+
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --ink: #f8fafc;
+  --ink-muted: #94a3b8;
+  --line: #334155;
+  --brand-navy: #f1f5f9;
+
+  --bg-blue: #40557b;
+  --bg-red: #b36d6d;
+  --bg-orange: #fec97e;
+  --bg-green: #4cec9a;
+  --bg-teal: #2d5a5a;
+  --bg-purple: #5b4a7a;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.card {
+  background-color: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .card {
+  background-image: linear-gradient(to bottom right, rgba(255,255,255,0.02), transparent);
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.hide-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar,
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Custom Sleek Scrollbar for Rolling Specialty Bars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 9999px;
+  margin: 4px 0;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.2s ease;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6;
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.5) rgba(15, 23, 42, 0.4);
+}
+
+/* ==========================================================================
+   A4 PRINT & PDF EXPORT STYLES (Single Page Perfection)
+   ========================================================================== */
+@media screen {
+  #print-portal-root,
+  #print-portal-glicemia,
+  .print-portal,
+  .print-only-portal {
+    display: none !important;
+  }
+}
+
+@media print {
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+
+  html, body {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 10pt !important;
+    line-height: 1.25 !important;
+  }
+
+  /* When printing any patient sheet or clinical portal, HIDE #root COMPLETELY so no screen wrappers/paddings leak into print */
+  body.ckd-print-active #root,
+  body.glicemia-print-active #root,
+  body.print-active #root {
+    display: none !important;
+  }
+
+  .hide-on-print,
+  .screen-only-preview,
+  nav,
+  aside,
+  footer,
+  #app-sidebar,
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  /* Display ONLY the active print portal attached directly to document.body */
+  #print-portal-root,
+  #print-portal-glicemia,
+  .print-portal,
+  .print-only-portal {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #print-portal-root {
+    max-width: 202mm !important;
+  }
+
+  .printable-a4-sheet,
+  .printable-sheet,
+  #a4-printable-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+

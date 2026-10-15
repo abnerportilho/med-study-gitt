@@ -1,0 +1,8 @@
+{
+  "name": "Remix: ESTUDO GERAL ",
+  "description": "Plataforma de estudos médicos com protocolos clínicos completos, incluindo Calculadora PREVENT™ (AHA 2024), Dislipidemias (Hipercolesterolemia e Hipertrigliceridemia), Cardiologia, Nefrologia e Obstetrícia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
