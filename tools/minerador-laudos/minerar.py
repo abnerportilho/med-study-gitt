@@ -48,7 +48,7 @@ LABORATORIOS = [
     ("Hermes Pardini", r"\bpardini\b"),
 ]
 FALTANDO_PRIORITARIOS = [
-    "Fleury", "a+ Medicina Diagnóstica", "Weinmann", "Alliança", "DB Diagnósticos",
+    "a+ Medicina Diagnóstica", "Weinmann", "Alliança", "DB Diagnósticos",
     "Delboni", "Sérgio Franco", "Alta Diagnósticos", "Tommasi", "LACEN",
     "Santa Casa", "Hospital das Clínicas",
 ]
@@ -65,7 +65,19 @@ EXAMES = {
     "inflamatorio": r"\bpcr\b|prote[íi]na\s+c\s+reativa|\bvhs\b",
     "vitaminas_ferro": r"ferritina|ferro\s+s[ée]rico|vitamina\s+(d|b12)|[áa]cido\s+f[óo]lico",
     "gasometria": r"gasometria|\bpco2\b|\bpo2\b|bicarbonato",
+    # Fase 2: função pulmonar, imagem e métodos gráficos
+    "espirometria": r"espirometria|\bvef1\b|\bcvf\b|\bfev1\b|\bfvc\b|broncodilatador|\bdlco\b|pletismografia",
+    "tc_torax": r"tomografia[^\n]{0,40}t[óo]rax|\btc\b[^\n]{0,20}t[óo]rax|lung-?rads|fleischner",
+    "rx_torax": r"radiografia[^\n]{0,40}t[óo]rax|\brx\b[^\n]{0,20}t[óo]rax|raio[- ]x[^\n]{0,20}t[óo]rax",
+    "usg": r"ultrassonografia|ultra-sonografia|ecografia|\busg\b|doppler|ti-?rads|o-?rads",
+    "mamografia": r"mamografia|bi-?rads",
+    "densitometria": r"densitometria|t-?score|z-?score",
+    "ressonancia": r"resson[âa]ncia",
+    "eco": r"ecocardiogra|fra[çc][ãa]o de eje[çc][ãa]o|\bfeve\b|teichholz|simpson|\bpsap\b",
+    "polissonografia": r"polissonografia|\biah\b|apneia|hipopneia|\bsaos\b",
 }
+# Tipos da Fase 2 que ainda precisam de exemplos (mostrados no resumo).
+TIPOS_FASE2 = ["espirometria", "tc_torax", "rx_torax", "usg", "mamografia", "densitometria", "eco", "polissonografia"]
 
 # O valor depois destes rótulos é trocado por ANONIMO.
 # Fortes: aceitos mesmo sem ":" ("Nome  FULANO  Idade"); fracos: só com ":" para não
@@ -345,6 +357,8 @@ def cmd_resumo() -> None:
     for lab in sorted(tabela, key=lambda k: -sum(tabela[k].values())):
         c = tabela[lab]
         print(f"| {lab} | " + " | ".join(str(c.get(f, 0)) for f in formatos) + f" | {sum(c.values())} | {pii[lab]} |")
+    por_tipo = Counter(t for r in registros for t in r["exames"] if t in TIPOS_FASE2)
+    print("\nImagem e função (Fase 2): " + ", ".join(f"{t} {por_tipo.get(t, 0)}" for t in TIPOS_FASE2))
     faltando = [lab for lab in FALTANDO_PRIORITARIOS if lab not in tabela]
     print(f"\nTotal: {len(registros)} arquivos, {len(tabela)} laboratórios")
     print("Ainda faltam: " + (", ".join(faltando) if faltando else "nenhum dos prioritários"))

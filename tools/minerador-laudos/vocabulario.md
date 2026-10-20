@@ -31,3 +31,21 @@ Variações úteis:
   `"Data de liberação"`, `"Assinado eletronicamente"`, `"CRBM"`, `"CRF-"`, `"Material: Sangue"`.
 - Nomes de equipamentos que aparecem no laudo: `"Sysmex XN"`, `"ABX Pentra"`, `"Cobas"`,
   `"Architect"`, `"Advia"`, `"citometria de fluxo"`.
+
+## Fase 2: imagem, função pulmonar e métodos gráficos
+
+| O que é | Exame | Formato | Onde |
+|---|---|---|---|
+| laudo | espirometria / prova de função pulmonar | pdf | clínica de pneumologia |
+| modelo de laudo | pletismografia / DLCO | filetype:pdf | SBPT |
+| máscara de laudo | tomografia de tórax / TC tórax | imagem / print | clínica de radiologia |
+| frases de laudo | radiografia de tórax / RX tórax | exemplo | CBR / Radiologia Brasileira |
+| laudo estruturado | ultrassonografia abdome / tireoide / mamas / pélvica | modelo | site:edu.br |
+| impressão diagnóstica | mamografia BI-RADS | relato de caso | SciELO |
+| conclusão | densitometria óssea T-score | site:scribd.com | hospital universitário |
+| resultado | ecocardiograma transtorácico / FEVE | site:passeidireto.com | clínica de cardiologia |
+| relatório | polissonografia / poligrafia / IAH | edital | clínica do sono |
+
+Termos que só aparecem dentro desses laudos: `"impressão diagnóstica"`, `"opinião"`,
+`"técnica:"`, `"VEF1/CVF"`, `"pós-broncodilatador"`, `"% do previsto"`, `"Teichholz"`,
+`"índice de apneia e hipopneia"`, `"T-score"`, `"BI-RADS"`, `"TI-RADS"`, `"Lung-RADS"`.
