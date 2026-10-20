@@ -39,6 +39,7 @@ const ROW_PREFIX = /^(?:RESULTADO\s*:\s*(?=[A-Za-zÀ-ÿ]|[-–•·]\s)|[-–•
 const QUALITATIVE = String.raw`tra[çc]os|moderad[oa]s|abundantes|escass[oa]s|pouc[oa]s|incont[áa]veis|n[ãa]o\s+reagentes?|reagentes?|negativ[oa]s?|positiv[oa]s?|ausentes?|presentes?|indetect[áa]vel|detect[áa]vel|raros?|raras?|numeros[oa]s|frequentes|l[íi]mpid[oa]|ligeiramente\s+turv[oa]|turv[oa]|amarel[oa](?:[- ]citrino|\s+claro|\s+escuro)?|citrino`;
 // Com ":" ou pontilhado o valor pode vir sozinho; sem eles, a linha tem de terminar no
 // resultado (e talvez na referência, também por extenso), para texto corrido não passar.
+const QUAL_START = new RegExp(String.raw`^(?:${QUALITATIVE})(?![A-Za-zÀ-ÿ])`, 'i');
 const QUAL_ROW = new RegExp(
   String.raw`^(${LABEL_START}[A-Za-zÀ-ÿ0-9 ()\-/,*+]*?)(?:\s*\.*\s*:|\s*\.{3,}|\s)\s*(${QUALITATIVE})(?:\s+(?:${QUALITATIVE}|n[ãa]o\s+dispon[íi]vel|[<>]?[\d.,]+))?\s*$`,
   'i',
@@ -185,9 +186,12 @@ export function parseLabelValue(pages: PageLines[], layout: Layout): ParsedRepor
   // Dentro de uma tabela de resultados anteriores: nada vira resultado até o próximo exame.
   let inHistory = false;
   let afterResultHeader = false;
+  // O título atual já recebeu um "Resultado:". Um segundo, sem título novo no meio, quer
+  // dizer que o título do exame seguinte não foi reconhecido: o valor não pode herdar este.
+  let examHasResult = false;
 
   for (const page of pages) {
-    const lines = page.lines.map((l) => l.trim()).filter(Boolean);
+    const lines = page.lines.map((l) => halfWidth(l).trim()).filter(Boolean);
     if (layout.skipPage && lines.some((l) => layout.skipPage!.test(l))) continue;
 
     for (let i = 0; i < lines.length; i++) {
@@ -195,16 +199,21 @@ export function parseLabelValue(pages: PageLines[], layout: Layout): ParsedRepor
       if (layout.endsExam?.test(line)) {
         exam = '';
         inHistory = false;
+        examHasResult = false;
       }
       if (layout.historyHeader?.test(line)) {
         inHistory = true;
         continue;
       }
+      // Belém imprime o histórico antes do "Material:"/"Método:" do resultado atual.
+      if (inHistory && layout.historyEnd?.test(line)) inHistory = false;
       if (skip.some((re) => re.test(line))) continue;
       const inline = layout.inlineTitle?.exec(line);
       if (inline) {
         exam = inline[1].trim();
         inHistory = false;
+        examHasResult = false;
+        afterResultHeader = true; // o valor pode vir sozinho na linha de baixo
         continue;
       }
 
@@ -215,6 +224,10 @@ export function parseLabelValue(pages: PageLines[], layout: Layout): ParsedRepor
       if (afterResultHeader) continue;
 
       const row = bare ?? (inHistory ? null : parseRow(line, layout));
+      if (row && row.label === 'RESULTADO') {
+        if (examHasResult) exam = '';
+        examHasResult = true;
+      }
       if (row) {
         // Resto do nome na linha de baixo: só quando o layout imprime assim (DASA) ou o nome
         // termina pela metade ("Contagem de"). Uma linha qualquer (o título do próximo exame)
@@ -237,6 +250,7 @@ export function parseLabelValue(pages: PageLines[], layout: Layout): ParsedRepor
       } else if (layout.isTitle(line, lines[i + 1] ?? '')) {
         exam = line;
         inHistory = false;
+        examHasResult = false;
       }
     }
   }
@@ -277,20 +291,29 @@ function parseRow(raw: string, layout: Layout): Row | null {
   const m = ROW.exec(line);
   if (m) {
     const [, rawLabel, colon, first, rest] = m;
-    const label = cleanLabel(rawLabel);
+    let label = cleanLabel(rawLabel);
     const values = readMeasurements([first, ...rest.split(/\s+/).filter(Boolean)]);
+    // Resultado impresso com comparador: "Antiperoxidase Inferior a 10,4 U/mL" é "<10,4", não 10,4.
+    const cmp = COMPARATOR_SUFFIX.exec(label);
+    if (cmp && values[0] && !/^[<>]/.test(values[0].value)) {
+      label = label.slice(0, cmp.index).trim();
+      values[0] = { ...values[0], value: (/inferior|menor|abaixo/i.test(cmp[1]) ? '<' : '>') + values[0].value };
+    }
     // Pontilhado ("INR ........ 1,05") separa rótulo e valor tanto quanto os dois-pontos.
     const separated = !!colon || /\.{3,}\s*$/.test(rawLabel);
     if (layout.accepts({ label, colon: separated, values })) return { label, values };
   }
   const q = QUAL_ROW.exec(line);
-  if (q) {
+  // "Amarelo Citrino" é um resultado solto (a cor), não "rótulo Amarelo, resultado Citrino".
+  if (q && !QUAL_START.test(q[1])) {
     const label = cleanLabel(q[1]);
     const values: Measurement[] = [{ value: capitalize(q[2].replace(/\s+/g, ' ')), qualitative: true }];
     if (layout.accepts({ label, colon: true, values })) return { label, values };
   }
   return null;
 }
+
+const COMPARATOR_SUFFIX = /\s(inferior\s+a|menor\s+(?:que|do\s+que)|abaixo\s+de|superior\s+a|maior\s+(?:que|do\s+que)|acima\s+de)$/i;
 
 // "Resultado: Menor que 2.00 UI/L", "Resultado: AMOSTRA NÃO REAGENTE PARA HIV".
 const RESULT_TEXT = /^RESULTADOS?\s*\.*\s*:\s*(.{2,80})$/i;
@@ -318,6 +341,12 @@ function resultText(line: string): Row | null {
   const q = QUAL_IN_TEXT.find(([re]) => re.test(text));
   return q ? { label: 'RESULTADO', values: [{ value: q[1], qualitative: true }] } : null;
 }
+
+/**
+ * Caracteres de largura dupla ("0,９", "ｍｇ") viram os comuns. Não usa NFKC, que também
+ * mudaria "10³" para "103" e "1ª hora" para "1a hora" e quebraria as unidades.
+ */
+const halfWidth = (s: string) => s.replace(/[\uFF01-\uFF5E]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
 
 const cleanLabel = (raw: string) => raw.replace(/[.\s]+$/g, '').replace(/\s+/g, ' ').trim();
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
@@ -349,6 +378,10 @@ function readMeasurements(raw: string[]): Measurement[] {
       i++;
     }
     const unit = readUnit(tokens, i);
+    // "54,9 % - 3184 /mm³" (IPC): hífen entre o percentual e o absoluto.
+    if (unit && tokens[i] === '%' && tokens[i + 1] === '-' && NUM_RE.test(tokens[i + 2] ?? '')) {
+      tokens.splice(i + 1, 1);
+    }
     if (unit) {
       const spec = UNITS.get(normUnit(tokens.slice(i, i + unit)))!;
       m.unit = spec.unit;

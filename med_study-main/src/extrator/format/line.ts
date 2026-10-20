@@ -86,8 +86,9 @@ function differential(values: Measurement[]): { main: Measurement; percent?: str
   if (pct) return { main: pct };
   const [first, second] = values;
   if (!first) return undefined;
-  // "56 2.049 40-70": percentual e absoluto sem unidade, como no Sabin.
-  if (second && !second.unit && Number(first.value.replace(',', '.')) <= 100) {
+  // "56 2.049 40-70": percentual e absoluto sem unidade, como no Sabin. O número é lido no
+  // formato brasileiro: "13.047" é treze mil (absoluto atual de uma tabela evolutiva), não 13,047%.
+  if (second && !second.unit && ptNumber(first.value) <= 100) {
     return { main: { value: second.value, unit: '/µl' }, percent: first.value };
   }
   return { main: first };
@@ -164,6 +165,11 @@ const isResult = (item: ExamItem) => /^RESULTADOS?$/i.test(item.label);
 const isTitledResult = (item: ExamItem) => isResult(item) && item.exam !== item.label;
 /** "Resultado:" sem título de exame acima: não se sabe de quê, fica para o médico decidir. */
 const isOrphanResult = (item: ExamItem) => isResult(item) && item.exam === item.label;
+
+/** "3.660" → 3660, "11,3" → 11.3 (ponto é milhar, vírgula é decimal). */
+export function ptNumber(value: string): number {
+  return Number(value.replace(/[<>\s]/g, '').replace(/\.(?=\d{3}(?!\d))/g, '').replace(',', '.'));
+}
 
 /** "13,2 g/dL", "39%", "8.500/mm³", "3.782/mm³ (62%)", "Negativo". */
 export function formatValue(e: LineEntry, opts: LineOptions = DEFAULT_OPTIONS): string {

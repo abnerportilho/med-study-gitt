@@ -33,13 +33,26 @@ export interface Layout {
   historyHeader?: RegExp;
   /** Título do exame na mesma linha de outra informação; o grupo 1 é o título. */
   inlineTitle?: RegExp;
+  /** Linha que encerra a tabela de resultados anteriores (o bloco do resultado atual começou). */
+  historyEnd?: RegExp;
   /** O nome do exame pode continuar na linha de baixo ("Transaminase" / "oxalacética - TGO"). */
   nameContinues?: boolean;
 }
 
-/** Pedaço de frase, não rótulo: parêntese sem abertura ("...). Valores") ou duas frases. */
+/**
+ * Pedaço de frase, não rótulo: parêntese sem abertura ("...). Valores"), duas frases,
+ * conta ("valor padrão de albumina = 4,3") ou frase em minúscula ("diabetes mellitus
+ * deve inferior a 7%"). Siglas como pH e pCO2 começam em minúscula mas seguem em maiúscula.
+ */
 function isSentence(label: string): boolean {
-  return (/\)/.test(label) && !/\(/.test(label)) || /[a-zà-ÿ]\.\s+[A-Za-zÀ-ÿ]/.test(label);
+  const start = label.replace(/^[*\s\-–•·]+/, '');
+  return (
+    (/\)/.test(label) && !/\(/.test(label)) ||
+    /[a-zà-ÿ]\.\s+[A-Za-zÀ-ÿ]/.test(label) ||
+    /=/.test(label) ||
+    // Uma palavra em minúscula é nome quebrado ("Linfócitos típicos" / "atípicos....: 0,0 %").
+    (/^[a-zà-ÿ]{2}/.test(start) && start.split(/\s+/).length >= 3)
+  );
 }
 
 export function isUpperDominant(s: string): boolean {
@@ -117,7 +130,7 @@ const REFERENCE_LABEL = new RegExp(
     String.raw`|maiores|menores|acima|abaixo|at[ée]|de|entre|inferior|superior|menor|maior|desej[áa]vel|[óo]timo` +
     String.raw`|lim[íi]trofe|alto|baixo|muito|normal|elevado|risco|meta|alvo|vr|v\.r|ref|refer[êe]ncia|intervalo|faixa|fase` +
     String.raw`|p[óo]s|pr[ée]|jejum|sem|com|para|ideal|categoria|n[íi]vel|in[íi]cio|pico|folicular|l[úu]tea|ovulat[óo]ria` +
-    String.raw`|menopausa|trimestre|primeiro|segundo|terceiro|intermedi[áa]rio|moderado|grave|leve|semanas?|dias?|m[êe]s|meses|anos?|horas?)\b` +
+    String.raw`|menopausa|trimestre|primeiro|segundo|terceiro|intermedi[áa]rio|moderado|grave|leve|semanas?|dias?|m[êe]s|meses|anos?|horas?)(?![A-Za-zÀ-ÿ])` +
     String.raw`|(?:deficien|insufici|suficien|intoxica|t[óo]xic))`,
   'i',
 );
@@ -156,7 +169,10 @@ export const GENERIC: Layout = {
     if (/\s(de|a|at[ée]|e|ou|que|com|para|por)$/.test(label) && !values.some((v) => v.unit)) return false;
     return colon || values.some((v) => v.unit || v.qualitative) || values.length >= 2;
   },
-  historyHeader: new RegExp(String.raw`^(${HISTORY})(?!\s*:\s*\S)`, 'i'),
+  // \b antes do lookahead: sem ele, "Resultados anteriores: 10/01/2026 - 34,8" casava só
+  // "anterior" e o resto da linha ("es: 10/01...") escapava do lookahead.
+  historyHeader: new RegExp(String.raw`^(?:${HISTORY})\b(?!\s*:\s*\S)`, 'i'),
+  historyEnd: EXAM_META,
   // Título: linha curta, sem ":" nem valores (decimais, datas). Em maiúsculas basta;
   // em minúsculas ("Urina tipo I", "Plaquetas") só quando a linha seguinte é a do
   // material/método/coleta, como fazem Unimed, Unilab e muitos laboratórios regionais.
@@ -170,7 +186,9 @@ export const GENERIC: Layout = {
     return !/(^|\s)\d+(\s|$)/.test(line) && isUpperDominant(line);
   },
   // "FERRO Material: sangue Método: ..." e "INSULINA MÉTODO: ..." (IPC): o título vem antes.
-  inlineTitle: /^([A-Za-zÀ-ÿ][^:]{2,60}?)\s+(?:Material|Amostra|M[ée]todo)\s*:/i,
+  // "COLESTEROL TOTAL    Resultado" com o valor na linha de baixo, também.
+  inlineTitle:
+    /^(?!RESULTADOS?\b)([A-Za-zÀ-ÿ][^:]{2,60}?)\s+(?:(?:Material|Amostra|M[ée]todo|Coleta)\s*:|(?:Resultados?|Valor(?:es)?\s*(?:\(es\))?\s+de\s+refer[êe]ncia)\s*:?\s*$)/i,
   // Separadores e rodapé de assinatura fecham o exame: se o próximo título não for
   // reconhecido, o resultado fica sem nome em vez de cair no exame anterior.
   endsExam: /^(_{5,}|-{5,}|={5,}|data\s+da\s+libera|exame\s+assinado|assinado\s+eletronicamente|conferido\s+e\s+assinado|liberado\s+(eletronicamente|por)|assinatura\s+digital)/i,

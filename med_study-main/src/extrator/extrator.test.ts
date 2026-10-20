@@ -205,3 +205,92 @@ describe('erros que não podem voltar', () => {
     expect(date('Número: 1 Data da Requisição: 01/08/2025 às 09:51')).toBe('01/08/2025');
   });
 });
+
+// Primeira testagem com gabaritos extras, auditoria de perdas e trechos de texto de outros projetos.
+describe('erros da primeira testagem', () => {
+  const line = (...lines: string[]) => selected(extractReport(fromLines(...lines)).entries).map((e) => `${e.abbr} ${e.value}`);
+
+  it('histórico numa linha só não esconde os resultados seguintes', () => {
+    expect(
+      line(
+        'Tempo de Atividade de Protrombina (TAP)',
+        'Material: Plasma (citrato) Coleta: 03/08/2026 - 08:18',
+        'Tempo de Protrombina: 32,5 segundos',
+        'Resultados anteriores: 10/01/2026 - 34,8',
+        'Atividade: 21,5 %',
+        'INR: 3,10',
+      ),
+    ).toEqual(['TAP 32,5', 'AP 21,5', 'INR 3,10']);
+  });
+
+  it('tabela de histórico impressa antes do "Material:" do resultado atual (Belém)', () => {
+    expect(
+      line('SHBG', 'RESULTADOS ANTERIORES', 'DATA SHBG', '24/03/2025 08:19 11,2 nmol/L', 'Material: SORO', 'SHBG: 9,8 nmol/L'),
+    ).toEqual(['SHBG 9,8']);
+  });
+
+  it('PSA livre não vira PSA total', () => {
+    expect(
+      line(
+        'PSA LIVRE - ANTÍGENO PROSTÁTICO ESPECÍFICO',
+        'Resultado: 0,09 ng/mL',
+        'PSA TOTAL',
+        'Material: Soro',
+        'Resultado: 0,30 ng/mL',
+      ),
+    ).toEqual(['PSA livre 0,09', 'PSA total 0,30']);
+  });
+
+  it('título com "Resultado" ao lado e o valor na linha de baixo; título não reconhecido não herda o anterior', () => {
+    expect(
+      line(
+        'COLESTEROL HDL Resultado',
+        '40 mg/dL',
+        'Valor(es) de referência',
+        'TESTOSTERONA LIVRE Valor de Referência:',
+        'Resultado: 8,04 ng/dL Menacme:',
+        'XYZ QUALQUER: TEXTO',
+        'Resultado: 5,5 mg/dL',
+      ),
+    ).toEqual(['Testosterona livre 8,04', 'HDL 40']);
+  });
+
+  it('resultado impresso com comparador mantém o sinal ("Inferior a 10,4" → <10,4)', () => {
+    expect(line('Antiperoxidase Inferior a 10,4 U/mL Inferior a 13,8 U/mL', 'Tireoideana -')).toEqual(['Anti-TPO <10,4']);
+  });
+
+  it('título na mesma linha da coleta ("VITAMINA B12 coleta: ...")', () => {
+    expect(line('VITAMINA B12 coleta: 18/08/2023 11:35', 'MÉTODO: QUIMIOLUMINESCÊNCIA MATERIAL: SANGUE', 'RESULTADO: 475 pg/mL')).toEqual([
+      'B12 475',
+    ]);
+  });
+
+  it('dígitos de largura dupla ("0,９") sem estragar "10³" nem "1ª hora"', () => {
+    expect(line('Creatinina .......... 0,９ mg/dL', 'Plaquetas 85 x 10³/mm3 130 a 450')).toEqual(['Plaq 85.000', 'Cr 0,9']);
+  });
+
+  it('absoluto com milhar numa tabela evolutiva não vira percentual ("13.047")', () => {
+    const { entries } = extractReport(fromLines('Segmentados 13.047 12.025 7.811 5.041 1.300 a 7.000 /mm³'));
+    expect(find(entries, 'Seg')).toMatchObject({ value: '13.047', percent: undefined });
+  });
+
+  it('hífen entre percentual e absoluto ("54,9 % - 3184 /mm³") e nome quebrado em minúscula', () => {
+    const { entries } = extractReport(
+      fromLines('Segmentados..........: 54,9 % - 3184 /mm³ 50 - 70', 'Linfócitos típicos....: 36,9 % - 2140 /mm³', 'atípicos....: 0,0 % - 0 /mm³ 0'),
+    );
+    expect(find(entries, 'Seg')).toMatchObject({ value: '3184', percent: '54,9' });
+    expect(find(entries, 'Linf atíp')).toMatchObject({ value: '0', percent: '0,0' });
+  });
+
+  it('referências e frases não viram resultado ("Até 10000/mL", "diabetes mellitus deve...", "valor padrão =")', () => {
+    expect(
+      line(
+        'Glicose: 90 mg/dL',
+        'Até 10000/mL',
+        'diabetes mellitus deve inferior a 7% (< 154 mg/dL), conforme a ADA',
+        '* valor padrão de albumina = 4,3 g/dL (1).',
+        'Amarelo Citrino',
+      ),
+    ).toEqual(['Glicemia 90']);
+  });
+});

@@ -123,12 +123,13 @@ export const RULES: Rule[] = [
   { abbr: 'Prolactina', match: name('PROLACTINA') },
   { abbr: 'TSH', match: name('^TSH|TIREOESTIMULANTE') },
   { abbr: 'T4L', match: name('^T4 LIVRE|TIROXINA LIVRE') },
-  { abbr: 'T4 total', match: name('^T4 TOTAL|^TIROXINA( TOTAL)?$') },
-  { abbr: 'T3', match: name('^T3\\b') },
+  { abbr: 'T4 total', match: name('^T4 TOTAL|^TIROXINA( TOTAL)?$|^T4 \\(TIROXINA\\)$') },
+  { abbr: 'T3L', match: name('^T3 LIVRE|TRIIODOTIRONINA LIVRE') },
+  { abbr: 'T3', match: name('^T3\\b|TRIIODOTIRONINA') },
   { abbr: 'PTH', match: name('^PTH|PARATORMONIO') },
   { abbr: 'Vit D', match: name('VITAMINA D|25 ?-? ?OH') },
-  { abbr: 'PSA total', match: name('^PSA TOTAL|ANTIGENO PROSTATICO ESPECIFICO TOTAL') },
-  { abbr: 'PSA livre', match: name('^PSA LIVRE') },
+  { abbr: 'PSA livre', match: name('^PSA LIVRE|ANTIGENO PROSTATICO ESPECIFICO LIVRE') },
+  { abbr: 'PSA total', match: (n) => !/LIVRE/.test(n) && /^PSA( TOTAL| ULTRA ?-?SENSIVEL)?\b|ANTIGENO PROSTATICO ESPECIFICO/.test(n) },
   { abbr: 'PSA L/T', suffix: '%', match: name('RELACAO.*PSA|PSA.*RELACAO') },
 
   // Glicose
@@ -206,7 +207,7 @@ export const RULES: Rule[] = [
   { abbr: 'Procalcitonina', match: name('PROCALCITONINA') },
 
   // Coagulação
-  { abbr: 'TAP', match: any(name('^PROTROMBINA \\(PACIENTE\\)|^TEMPO DE PROTROMBINA'), name('^TEMPO DO PACIENTE$', 'PROTROMBINA|TAP|\\bTP\\b')) },
+  { abbr: 'TAP', match: any(name('^PROTROMBINA \\(PACIENTE\\)|^TEMPO DE PROTROMBINA|^TAP$|^TP$'), name('^TEMPO DO PACIENTE$', 'PROTROMBINA|TAP|\\bTP\\b')) },
   { abbr: 'AP', suffix: '%', match: name('^ATIVIDADE( DE PROTROMBINA)?$') },
   { abbr: 'INR', match: name('\\bINR\\b|\\bRNI\\b') },
   { abbr: 'TTPA', match: any(name('^PLASMA PACIENTE|^TEMPO DE TROMBOPLASTINA|^TTPA'), name('^TEMPO DO PACIENTE$', 'TROMBOPLASTINA|TTPA')) },
