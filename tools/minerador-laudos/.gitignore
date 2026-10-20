@@ -1,0 +1,6 @@
+# Laudos baixados podem ter dados de pacientes: nunca versionar.
+amostras/
+catalogo.jsonl
+urls.txt
+# anonimizados/ só entra no Git depois de revisado manualmente
+anonimizados/
