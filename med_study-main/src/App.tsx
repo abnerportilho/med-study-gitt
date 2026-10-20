@@ -7,7 +7,7 @@ import {
   ArrowRightLeft, Zap, ShieldCheck, CornerDownRight, Clock,
   Heart, Droplet, Moon, Sun, Globe, Flame,
   Baby, Syringe, Brain, Dna, Scissors, Calculator, HeartHandshake,
-  X, Filter
+  X, Filter, FileSearch
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -102,6 +102,7 @@ import MapaGlicemicoMain from './MapaGlicemicoMain';
 import HubPortalMain from './HubPortalMain';
 import MedicamentosMain from './MedicamentosMain';
 import RastreadorInteracoesMain from './RastreadorInteracoesMain';
+import ExtratorExamesMain from './ExtratorExamesMain';
 import AsmaClinicaDiagnostico from './AsmaClinicaDiagnostico';
 import { DRUGS_DATABASE, DrugItem } from './data/medicamentosData';
 
@@ -1156,6 +1157,25 @@ export default function App() {
             Rastreador de Interações Multidrogas (Separado)
           </div>
         </button>
+
+        {/* Extrator de Exames (PDF do laboratório → linha para o prontuário) */}
+        <button
+          onClick={() => {
+            setSelectedSpecialty('extrator');
+          }}
+          className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center transition-all relative group mb-2",
+            selectedSpecialty === 'extrator' 
+              ? "bg-teal-600 text-white shadow-md ring-2 ring-teal-400/40" 
+              : "text-slate-400 hover:bg-slate-800 hover:text-teal-400"
+          )}
+        >
+          <FileSearch size={24} />
+          {/* Tooltip */}
+          <div className="absolute left-full ml-4 px-3 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">
+            Extrator de Exames (PDF → prontuário)
+          </div>
+        </button>
         
         <div 
           id="specialties-scroll-container"
@@ -1193,7 +1213,7 @@ export default function App() {
       <aside 
         className={cn(
           "bg-card border-r border-line py-5 flex flex-col sticky top-0 z-40 transition-all duration-300 ease-in-out shrink-0 relative h-[100dvh]",
-          (isSidebarCollapsed || selectedSpecialty === 'search' || selectedSpecialty === 'hub' || selectedSpecialty === 'orientacoes' || selectedSpecialty === 'rastreador') 
+          (isSidebarCollapsed || selectedSpecialty === 'search' || selectedSpecialty === 'hub' || selectedSpecialty === 'orientacoes' || selectedSpecialty === 'rastreador' || selectedSpecialty === 'extrator') 
             ? "w-0 p-0 overflow-hidden border-none" 
             : selectedSpecialty === 'medicamentos'
               ? "w-80 md:w-88 px-3"
@@ -1428,7 +1448,7 @@ export default function App() {
       </aside>
 
       {/* Collapse Button (Toggles Secondary Sidebar / Drug Study Lateral Panel) */}
-      {selectedSpecialty !== 'search' && selectedSpecialty !== 'hub' && selectedSpecialty !== 'orientacoes' && selectedSpecialty !== 'rastreador' && (
+      {selectedSpecialty !== 'search' && selectedSpecialty !== 'hub' && selectedSpecialty !== 'orientacoes' && selectedSpecialty !== 'rastreador' && selectedSpecialty !== 'extrator' && (
         <div className="sticky top-6 z-50 h-0">
           <button 
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -1513,6 +1533,8 @@ export default function App() {
           />
         ) : selectedSpecialty === 'rastreador' ? (
           <RastreadorInteracoesMain />
+        ) : selectedSpecialty === 'extrator' ? (
+          <ExtratorExamesMain />
         ) : selectedSpecialty === 'medicamentos' ? (
           <MedicamentosMain 
             selectedDrugId={selectedDrugId}
