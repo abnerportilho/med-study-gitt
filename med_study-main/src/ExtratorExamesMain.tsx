@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FileSearch, UploadCloud, Copy, Check, Trash2, ShieldCheck, AlertTriangle,
-  Loader2, FileText, X, ChevronDown, ChevronUp, Info,
+  Loader2, FileText, X, ChevronDown, ChevronUp, Info, ScanLine,
 } from 'lucide-react';
 import { readPdfFile } from './extrator/pdf/browser';
 import {
-  extractReport, buildLine, formatValue, shortDate, DEFAULT_OPTIONS,
-  type LineEntry, type LineOptions, type ParsedReport,
+  extractDocument, buildLine, buildImagingLine, formatValue, shortDate, DEFAULT_OPTIONS,
+  type DocumentKind, type ImagingReport, type LineEntry, type LineOptions, type ParsedReport,
 } from './extrator';
 
 interface Laudo {
@@ -15,7 +15,10 @@ interface Laudo {
   status: 'lendo' | 'pronto' | 'erro';
   error?: string;
   report?: ParsedReport;
+  kind?: DocumentKind;
   entries: LineEntry[];
+  /** Laudos de imagem do PDF (um PDF pode trazer mais de um exame). */
+  imaging: ImagingReport[];
   open: boolean;
 }
 
@@ -44,7 +47,7 @@ export default function ExtratorExamesMain() {
     if (pdfs.length === 0) return;
     setEditedText(null);
 
-    const novos: Laudo[] = pdfs.map((f) => ({ id: `laudo-${nextId++}`, fileName: f.name, status: 'lendo', entries: [], open: false }));
+    const novos: Laudo[] = pdfs.map((f) => ({ id: `laudo-${nextId++}`, fileName: f.name, status: 'lendo', entries: [], imaging: [], open: false }));
     setLaudos((prev) => [...prev, ...novos]);
 
     await Promise.all(
@@ -54,9 +57,11 @@ export default function ExtratorExamesMain() {
           const pages = await readPdfFile(file);
           const textChars = pages.reduce((n, p) => n + p.lines.join('').length, 0);
           if (textChars < 40) throw new Error('Este PDF não tem texto (parece escaneado ou foto). Por enquanto só PDFs com texto.');
-          const { report, entries } = extractReport(pages);
-          if (!entries.some((e) => e.selected)) throw new Error('Nenhum resultado reconhecido neste PDF.');
-          setLaudos((prev) => prev.map((l) => (l.id === id ? { ...l, status: 'pronto', report, entries } : l)));
+          const { report, entries, imaging, kind } = extractDocument(pages);
+          if (!entries.some((e) => e.selected) && imaging.length === 0) throw new Error('Nenhum resultado reconhecido neste PDF.');
+          setLaudos((prev) =>
+            prev.map((l) => (l.id === id ? { ...l, status: 'pronto', report, entries, imaging, kind } : l)),
+          );
         } catch (err) {
           const msg = err instanceof Error ? err.message : 'Não foi possível ler este PDF.';
           setLaudos((prev) => prev.map((l) => (l.id === id ? { ...l, status: 'erro', error: msg } : l)));
@@ -82,7 +87,10 @@ export default function ExtratorExamesMain() {
     () =>
       laudos
         .filter((l) => l.status === 'pronto' && l.report)
-        .map((l) => buildLine(l.entries, l.report!.collectedAt, options))
+        .flatMap((l) => [
+          buildLine(l.entries, l.report!.collectedAt, options),
+          ...l.imaging.filter((r) => r.selected).map((r) => buildImagingLine(r, options)),
+        ])
         .filter(Boolean)
         .join('\n'),
     [laudos, options],
@@ -94,6 +102,15 @@ export default function ExtratorExamesMain() {
     setLaudos((prev) =>
       prev.map((l) =>
         l.id !== laudoId ? l : { ...l, entries: l.entries.map((e) => (e.id === entryId ? { ...e, selected: !e.selected } : e)) },
+      ),
+    );
+  };
+
+  const toggleImaging = (laudoId: string, imagingId: string) => {
+    setEditedText(null);
+    setLaudos((prev) =>
+      prev.map((l) =>
+        l.id !== laudoId ? l : { ...l, imaging: l.imaging.map((r) => (r.id === imagingId ? { ...r, selected: !r.selected } : r)) },
       ),
     );
   };
@@ -147,7 +164,7 @@ export default function ExtratorExamesMain() {
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-brand-navy tracking-tight">Extrator de Exames</h1>
           <p className="text-xs md:text-sm text-ink-muted max-w-3xl leading-relaxed">
-            Solte o PDF do laboratório e receba os resultados numa linha, com siglas, unidades e data da coleta, pronta para colar no prontuário.
+            Solte o PDF do laboratório ou o laudo de imagem (TC, RX, USG, mamografia, densitometria, eco, polissonografia) e receba uma linha pronta para colar no prontuário: siglas, unidades e data nos exames de sangue; conclusão e escores nos laudos de imagem.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 max-w-sm">
@@ -177,7 +194,7 @@ export default function ExtratorExamesMain() {
         }`}
       >
         <UploadCloud size={40} className={dragging ? 'text-teal-300' : 'text-teal-400'} />
-        <div className="text-base font-bold text-brand-navy">Arraste os PDFs dos exames aqui</div>
+        <div className="text-base font-bold text-brand-navy">Arraste os PDFs dos exames ou laudos aqui</div>
         <div className="text-xs text-ink-muted">
           ou clique para escolher · também dá para colar (Ctrl+V) · vários PDFs de uma vez viram uma linha por laudo
         </div>
@@ -212,7 +229,7 @@ export default function ExtratorExamesMain() {
               <span className="text-xs font-bold text-brand-navy uppercase tracking-wider">Para colar no prontuário</span>
               <div className="flex flex-wrap items-center gap-2">
                 <Toggle label="Unidades" on={options.units} onClick={() => setOption('units')} />
-                <Toggle label="Data da coleta" on={options.date} onClick={() => setOption('date')} />
+                <Toggle label="Data" on={options.date} onClick={() => setOption('date')} />
                 <button
                   onClick={clearAll}
                   className="px-3 py-2 rounded-xl border border-line hover:border-red-400/60 text-xs font-bold text-ink-muted hover:text-red-300 flex items-center gap-1.5 cursor-pointer bg-card"
@@ -251,6 +268,7 @@ export default function ExtratorExamesMain() {
                   laudo={l}
                   options={options}
                   onToggleEntry={(entryId) => toggleEntry(l.id, entryId)}
+                  onToggleImaging={(imagingId) => toggleImaging(l.id, imagingId)}
                   onToggleOpen={() => toggleOpen(l.id)}
                   onRemove={() => removeLaudo(l.id)}
                 />
@@ -279,15 +297,17 @@ function Toggle({ label, on, onClick }: { label: string; on: boolean; onClick: (
 }
 
 function LaudoCard({
-  laudo, options, onToggleEntry, onToggleOpen, onRemove,
+  laudo, options, onToggleEntry, onToggleImaging, onToggleOpen, onRemove,
 }: {
   laudo: Laudo;
   options: LineOptions;
   onToggleEntry: (entryId: string) => void;
+  onToggleImaging: (imagingId: string) => void;
   onToggleOpen: () => void;
   onRemove: () => void;
 }) {
-  const { report, entries } = laudo;
+  const { report, entries, imaging } = laudo;
+  const hasLab = entries.length > 0;
   const chosen = entries.filter((e) => e.selected).length;
   const review = entries.filter((e) => !e.known && !e.duplicate).length;
 
@@ -304,7 +324,7 @@ function LaudoCard({
               </span>
             )}
             {laudo.status === 'erro' && <span className="text-red-300">{laudo.error}</span>}
-            {laudo.status === 'pronto' && report && (
+            {laudo.status === 'pronto' && report && hasLab && (
               <>
                 <span>Laboratório: {report.lab === 'Desconhecido' ? 'não identificado' : report.lab}</span>
                 <span>Coleta: {report.collectedAt ? shortDate(report.collectedAt) : 'não encontrada'}</span>
@@ -313,9 +333,14 @@ function LaudoCard({
                 </span>
               </>
             )}
+            {laudo.status === 'pronto' && imaging.length > 0 && (
+              <span>
+                Laudo de imagem · {imaging.length} exame{imaging.length > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
         </div>
-        {laudo.status === 'pronto' && (
+        {laudo.status === 'pronto' && hasLab && (
           <button
             onClick={onToggleOpen}
             className="px-3 py-1.5 rounded-lg border border-line text-[11px] font-bold text-ink-muted hover:text-brand-navy flex items-center gap-1 cursor-pointer"
@@ -329,7 +354,17 @@ function LaudoCard({
         </button>
       </div>
 
-      {laudo.status === 'pronto' && report?.warning && (
+      {laudo.status === 'pronto' && imaging.length > 0 && (
+        <div className="px-4 pb-4 space-y-2">
+          {imaging.map((r) => (
+            <div key={r.id}>
+              <ImagingCard report={r} options={options} onToggle={() => onToggleImaging(r.id)} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {laudo.status === 'pronto' && hasLab && report?.warning && (
         <div className="mx-4 mb-3 flex items-center gap-2 text-[11px] text-amber-200 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
           <AlertTriangle size={13} className="shrink-0" />
           {report.warning}
@@ -379,6 +414,56 @@ function LaudoCard({
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+function ImagingCard({ report, options, onToggle }: { report: ImagingReport; options: LineOptions; onToggle: () => void }) {
+  const missing = !report.conclusion;
+  return (
+    <div className={`rounded-xl border p-3 space-y-2 ${report.selected ? 'border-teal-500/30 bg-teal-500/5' : 'border-line opacity-60'}`}>
+      <div className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          checked={report.selected}
+          onChange={onToggle}
+          className="accent-teal-500 cursor-pointer mt-0.5"
+          aria-label={`Incluir ${report.exam}`}
+        />
+        <ScanLine size={15} className="text-teal-400 shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-bold text-brand-navy">
+            {report.exam}
+            {report.date && <span className="font-normal text-ink-muted"> · {shortDate(report.date)}</span>}
+            <span className="font-normal text-ink-muted"> · pág. {report.page}</span>
+          </div>
+          {report.scores.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {report.scores.map((sc) => (
+                <span key={sc} className="text-[10px] font-semibold text-teal-200 bg-teal-500/15 border border-teal-500/30 rounded px-1.5 py-0.5">
+                  {sc}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      {report.conclusion ? (
+        <p className="text-xs text-ink leading-relaxed pl-6">{report.conclusion}</p>
+      ) : (
+        <p className="text-[11px] text-amber-200 pl-6">
+          Conclusão não encontrada neste laudo. Marque para incluir só o nome do exame e a data, ou edite o texto final.
+        </p>
+      )}
+      {report.conclusionFromFindings && !missing && (
+        <p className="text-[11px] text-amber-200 pl-6 flex items-center gap-1.5">
+          <AlertTriangle size={12} className="shrink-0" />
+          O laudo não tem seção de conclusão: foi usada a descrição.
+        </p>
+      )}
+      <p className="text-[10px] font-mono text-ink-muted pl-6 truncate" title={buildImagingLine(report, options)}>
+        {buildImagingLine(report, options)}
+      </p>
     </div>
   );
 }
