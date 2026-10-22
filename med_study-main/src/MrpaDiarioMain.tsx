@@ -27,12 +27,19 @@ interface DayRecord {
 
 const emptyReading = (): Reading => ({ sys: '', dia: '', hr: '' });
 
-// Protocolos de MRPA mais usados (Diretrizes Brasileiras de MAPA e MRPA, SBC).
+// Protocolos de MRPA mais usados (Diretrizes Brasileiras de MAPA e MRPA, SBC). São atalhos:
+// dias e medidas por período também podem ser escolhidos livremente.
 const PROTOCOLS = [
   { id: '7x2', label: '7 dias • 2 medidas manhã + 2 noite', days: 7, perSession: 2 },
   { id: '5x3', label: '5 dias • 3 medidas manhã + 3 noite', days: 5, perSession: 3 },
   { id: '7x3', label: '7 dias • 3 medidas manhã + 3 noite', days: 7, perSession: 3 },
 ];
+
+const DAY_OPTIONS = [3, 5, 7, 10, 14, 21, 28, 30];
+const MAX_DAYS = 31;
+
+const protocolLabelFor = (days: number, perSession: number) =>
+  `${days} dia${days > 1 ? 's' : ''} • ${perSession} medida${perSession > 1 ? 's' : ''} manhã + ${perSession} noite`;
 
 const toNum = (v: string) => {
   const n = Number(v.replace(',', '.'));
@@ -52,8 +59,10 @@ export default function MrpaDiarioMain() {
     'Meça pela manhã ANTES de tomar os remédios e do café, e à noite ANTES do jantar. Traga esta folha e o aparelho na próxima consulta.',
   );
 
-  const [protocolId, setProtocolId] = useState('7x2');
-  const protocol = PROTOCOLS.find((p) => p.id === protocolId) ?? PROTOCOLS[0];
+  const [numDays, setNumDays] = useState(7);
+  const [perSession, setPerSession] = useState(2);
+  const protocol = { days: numDays, perSession, label: protocolLabelFor(numDays, perSession) };
+  const presetId = PROTOCOLS.find((p) => p.days === numDays && p.perSession === perSession)?.id ?? 'custom';
   const [includeHr, setIncludeHr] = useState(false);
   const [discardFirstDay, setDiscardFirstDay] = useState(true);
   const [autoFillDates, setAutoFillDates] = useState(false);
@@ -316,10 +325,53 @@ export default function MrpaDiarioMain() {
               <input className={inputCls} value={currentMeds} onChange={(e) => setCurrentMeds(e.target.value)} />
             </label>
             <label className="space-y-1">
-              <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Protocolo</span>
-              <select className={inputCls} value={protocolId} onChange={(e) => setProtocolId(e.target.value)}>
+              <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Protocolo (atalho)</span>
+              <select
+                className={inputCls}
+                value={presetId}
+                onChange={(e) => {
+                  const p = PROTOCOLS.find((x) => x.id === e.target.value);
+                  if (p) {
+                    setNumDays(p.days);
+                    setPerSession(p.perSession);
+                  }
+                }}
+              >
                 {PROTOCOLS.map((p) => (
                   <option key={p.id} value={p.id}>{p.label}</option>
+                ))}
+                <option value="custom" disabled>Personalizado ({protocol.label})</option>
+              </select>
+            </label>
+            <div className="space-y-1 md:col-span-2">
+              <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Número de dias (até {MAX_DAYS})</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {DAY_OPTIONS.map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setNumDays(d)}
+                    className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold cursor-pointer ${numDays === d ? 'border-rose-400/60 bg-rose-500/15 text-rose-200' : 'border-line bg-bg text-ink-muted hover:text-brand-navy'}`}
+                  >
+                    {d}
+                  </button>
+                ))}
+                <input
+                  type="number"
+                  min={1}
+                  max={MAX_DAYS}
+                  aria-label="Número de dias"
+                  className="w-16 rounded-lg bg-bg border border-line px-2 py-1.5 text-xs font-mono"
+                  value={numDays}
+                  onChange={(e) => setNumDays(Math.min(MAX_DAYS, Math.max(1, Number(e.target.value) || 1)))}
+                />
+                <span className="text-[11px] text-ink-muted">dias</span>
+              </div>
+            </div>
+            <label className="space-y-1">
+              <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Medidas por período</span>
+              <select className={inputCls} value={perSession} onChange={(e) => setPerSession(Number(e.target.value))}>
+                {[1, 2, 3, 4].map((n) => (
+                  <option key={n} value={n}>{n} pela manhã + {n} à noite</option>
                 ))}
               </select>
             </label>
@@ -554,8 +606,10 @@ function A4MrpaPrintDocument({
   };
   isPrintPortal?: boolean;
 }) {
-  // Linhas altas para escrever à mão: a grade ocupa a maior parte da folha.
-  const rowPad = records.length <= 5 ? 'py-6' : 'py-4';
+  // Linhas altas para escrever à mão; com muitos dias a grade fica compacta para caber em 1 folha.
+  const n = records.length;
+  const rowPad = n <= 5 ? 'py-6' : n <= 7 ? 'py-4' : n <= 10 ? 'py-2.5' : n <= 14 ? 'py-1.5' : n <= 21 ? 'py-1' : 'py-[2px]';
+  const dense = n > 14;
   const cell = (r: Reading) =>
     r.sys && r.dia ? (
       <span className="font-mono font-bold">
@@ -603,7 +657,7 @@ function A4MrpaPrintDocument({
       </div>
 
       <div className="overflow-hidden border border-slate-400 rounded-md mb-2.5">
-        <table className="w-full border-collapse text-[10.5px]">
+        <table className={`w-full border-collapse ${dense ? 'text-[9px] leading-tight' : 'text-[10.5px]'}`}>
           <thead>
             <tr className="bg-slate-100 text-slate-800 border-b border-slate-400 text-[9.5px]">
               <th rowSpan={2} className="py-1 px-1 w-8 border-r border-slate-300">Dia</th>
@@ -626,7 +680,7 @@ function A4MrpaPrintDocument({
               <tr key={r.dayNumber} className="border-b border-slate-300">
                 <td className={`${rowPad} px-1 text-center font-bold text-slate-700 border-r border-slate-300 bg-slate-50`}>
                   {r.dayNumber}
-                  {discardFirstDay && r.dayNumber === 1 && <span className="block text-[7.5px] font-normal text-slate-500">adaptação</span>}
+                  {discardFirstDay && r.dayNumber === 1 && (dense ? '*' : <span className="block text-[7.5px] font-normal text-slate-500">adaptação</span>)}
                 </td>
                 <td className={`${rowPad} px-1 text-center border-r border-slate-300 font-mono`}>
                   {r.dateStr ? <span className="font-bold">{r.dateStr}</span> : <span className="text-slate-400 text-[10px]">___/___</span>}
@@ -652,7 +706,7 @@ function A4MrpaPrintDocument({
           const val = v as { sys: number | null; dia: number | null };
           return (
             <div key={label as string} className="border border-slate-300 rounded p-1.5 text-center">
-              <span className="font-bold text-slate-500 uppercase text-[8.5px] block">{label as string} {discardFirstDay ? '(sem o 1º dia)' : ''}</span>
+              <span className="font-bold text-slate-500 uppercase text-[8.5px] block">{label as string} {discardFirstDay ? '(sem o 1º dia*)' : ''}</span>
               <span className="font-mono font-black text-slate-900 text-sm">{val.sys !== null ? `${val.sys}/${val.dia}` : '_____/_____'}</span>
               <span className="text-slate-500"> mmHg</span>
             </div>
@@ -663,7 +717,7 @@ function A4MrpaPrintDocument({
       <div className="grid grid-cols-2 gap-2 text-[9px] text-slate-700 bg-slate-50 p-2 rounded border border-slate-300 mb-2">
         <div className="border-r border-slate-200 pr-2">
           <span className="font-bold text-slate-900 block mb-0.5 uppercase tracking-wide">Como medir corretamente</span>
-          <ul className="leading-tight list-disc pl-3 space-y-0.5">
+          <ul className={`leading-tight list-disc pl-3 ${dense ? 'text-[8px]' : 'space-y-0.5'}`}>
             {TECHNIQUE.map((t) => <li key={t}>{t}</li>)}
           </ul>
         </div>
