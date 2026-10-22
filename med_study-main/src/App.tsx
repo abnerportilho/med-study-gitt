@@ -15,6 +15,7 @@ import { twMerge } from 'tailwind-merge';
 import CirurgiaMain from './CirurgiaMain';
 import PreventivaMain from './PreventivaMain';
 import DermatologiaMain from './DermatologiaMain';
+import DERM_MANIFEST from './dermatologia/manifest.json';
 import CKDEPICalculator from './CKDEPICalculator';
 import CKDPatientGuide from './CKDPatientGuide';
 import SCCPatho from './SCCPatho';
@@ -341,7 +342,11 @@ const SPECIALTIES = [
     name: 'Dermatologia',
     icon: Sun,
     diseases: [
-      { id: 'dermato-construcao', name: 'Construir Módulo Junto' }
+      // Um item por capítulo do Manual de Dermatologia; o número mantém a ordem no menu alfabético.
+      ...DERM_MANIFEST.map(c => ({ id: c.id, name: `${String(c.num).padStart(2, '0')}. ${c.short}` })),
+      { id: 'derm-glossario', name: 'Glossário de Dermatologia' },
+      { id: 'penfigo', name: 'Pênfigo' },
+      { id: 'psoriase', name: 'Psoríase' }
     ]
   },
   {
@@ -1566,14 +1571,7 @@ export default function App() {
           <DermatologiaMain 
             key={selectedDisease} 
             initialTopic={selectedDisease}
-            onNavigateToDrug={(drugId) => {
-              setSelectedSpecialty('medicamentos');
-              setSelectedDisease(drugId);
-            }}
-            onNavigateToFicha={(fichaId) => {
-              setSelectedSpecialty('hub-portal');
-              setSelectedDisease(fichaId);
-            }}
+            onSelectTopic={(topicId) => setSelectedDisease(topicId)}
           />
         ) : selectedDisease === 'prenatal' ? (
           <PrenatalMain />

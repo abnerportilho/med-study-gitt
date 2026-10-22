@@ -956,7 +956,7 @@ export default function HubPortalMain({
                 name: 'Dermatologia',
                 icon: Sun,
                 color: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-                diseases: ['Módulo em Construção Colaborativa']
+                diseases: ['Manual em 19 Capítulos', 'Pênfigo', 'Psoríase']
               }
             ].map(spec => {
               const IconComp = spec.icon;
