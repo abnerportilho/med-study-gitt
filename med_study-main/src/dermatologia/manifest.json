@@ -1,0 +1,192 @@
+[
+ {
+  "num": 1,
+  "id": "derm-cap-01",
+  "part": "I",
+  "partName": "Fundamentos da dermatologia",
+  "kind": "teorica",
+  "short": "Anatomia e fisiologia da pele",
+  "title": "Anatomia e fisiologia da pele: camadas, funções e anexos",
+  "topics": "A pele como órgão-barreira e relógio de renovação; Epiderme: avascular, estratificada e impermeável; As camadas da epiderme; Epiderme espessa versus delgada; Queratinócitos, melanócitos e o escudo contra a radiação; Junções celulares e superfície lipídica: por que a água não vai embora; Derme: sustentação, elasticidade e integração sensorial; Vasos, nervos e receptores cutâneos; Termorregulação e imunidade cutânea; Termorregulação; Imunidade da pele; Hipoderme: reserva, isolamento e amortecimento; Anexos cutâneos: unhas; Anexos cutâneos: cabelos"
+ },
+ {
+  "num": 2,
+  "id": "derm-cap-02",
+  "part": "I",
+  "partName": "Fundamentos da dermatologia",
+  "kind": "teorica",
+  "short": "Microbiota fisiológica da pele",
+  "title": "Microbiota fisiológica da pele",
+  "topics": "O que é a microbiota cutânea; Qual a função da microbiota da pele?; A microbiota é sempre a mesma?; Microbiota normal × microbiota infecciosa; Principais microrganismos da microbiota fisiológica; Detalhando os principais comensais; Microbiota infecciosa: bactérias; Microbiota infecciosa: fungos; Microbiota infecciosa: vírus; Conclusão: a simbiose essencial"
+ },
+ {
+  "num": 3,
+  "id": "derm-cap-03",
+  "part": "I",
+  "partName": "Fundamentos da dermatologia",
+  "kind": "teorica",
+  "short": "Propedêutica dermatológica",
+  "title": "Propedêutica dermatológica e semiologia armada",
+  "topics": "A abordagem sistemática do paciente; O exame dermatológico: inspeção, palpação, digitopressão e compressão; Descrevendo uma lesão dermatológica; Dermatoscopia; Avaliação dermatoscópica da pigmentação; Principais diagnósticos dermatoscópicos; Lâmpada de Wood; Outros exames complementares"
+ },
+ {
+  "num": 4,
+  "id": "derm-cap-04",
+  "part": "I",
+  "partName": "Fundamentos da dermatologia",
+  "kind": "teorica",
+  "short": "Lesões elementares I — primárias",
+  "title": "Lesões elementares I: o roteiro de descrição e as lesões primárias",
+  "topics": "A base da semiologia: lesões primárias × secundárias; Classificação das lesões primárias e roteiro de descrição; O roteiro sistemático de descrição clínica; Alterações de cor: máculas e manchas; Exemplos dos slides; Elevações sólidas: pápula, placa, nódulo, tumor e vegetação; Exemplos dos slides; Coleções líquidas: vesícula, bolha, pústula, abscesso e hematoma"
+ },
+ {
+  "num": 5,
+  "id": "derm-cap-05",
+  "part": "I",
+  "partName": "Fundamentos da dermatologia",
+  "kind": "teorica",
+  "short": "Lesões elementares II — secundárias e padrões",
+  "title": "Lesões elementares II: lesões secundárias, forma, arranjo e distribuição",
+  "topics": "Alterações de espessura e consistência; Perdas e reparações; Perda de substância: a profundidade define o nome; Resíduos na superfície: escama, crosta e escara; Estadiamento clínico das escaras (úlceras por pressão); Formas das lesões; Exemplos clínicos de formas (Lesões elementares 2); Arranjo das lesões; Distribuição e topografia clínica; O olho clínico: a arte da descrição; Quadro-resumo de todas as lesões elementares"
+ },
+ {
+  "num": 6,
+  "id": "derm-cap-06",
+  "part": "II",
+  "partName": "Dermatoses infecciosas",
+  "kind": "teorica",
+  "short": "Piodermites",
+  "title": "Piodermites: infecções bacterianas da pele",
+  "topics": "Os agentes etiológicos e a lógica anatômica; Impetigo; Impetigo não bolhoso (crostoso); Impetigo bolhoso; Diagnóstico e tratamento do impetigo; Ectima: a progressão profunda; Síndrome da pele escaldada estafilocócica (SSSS); Foliculites; Tipos de foliculite; Pseudofoliculite; Furúnculo e carbúnculo; Erisipela e celulite; Paroníquia; Síntese prática das piodermites"
+ },
+ {
+  "num": 7,
+  "id": "derm-cap-07",
+  "part": "II",
+  "partName": "Dermatoses infecciosas",
+  "kind": "teorica",
+  "short": "Dermatoviroses",
+  "title": "Dermatoviroses",
+  "topics": "As quatro famílias das dermatoviroses; Doenças virais exantemáticas; Sarampo; Rubéola; Eritema infeccioso; Eritema súbito (roséola infantil); Doença mão-pé-boca; Varicela (catapora); Quadro comparativo das doenças exantemáticas; Herpes simples; Tratamento do herpes simples; Herpes-zóster; Tratamento do zóster; Poxvírus: mpox e molusco contagioso; Monkeypox (mpox); Molusco contagioso; Verrugas virais (HPV); Quadro-resumo das dermatoviroses"
+ },
+ {
+  "num": 8,
+  "id": "derm-cap-08",
+  "part": "II",
+  "partName": "Dermatoses infecciosas",
+  "kind": "teorica",
+  "short": "Micoses",
+  "title": "Micoses superficiais e cutâneas",
+  "topics": "Pitiríase versicolor; Diagnóstico e tratamento; Pitiríase versicolor × dermatite seborreica; Conceito e epidemiologia; Etiopatogenia; Manifestações clínicas; Diagnóstico e diferenciais; Tratamento; Dermatofitoses (tinhas); Tinha do couro cabeludo ( tinea capitis ); Tinha do corpo ( tinea corporis ); Tinha inguinocrural ( tinea cruris ); Tinha da unha ( tinea unguium ); Tinha do pé ( tinea pedis ); Tinha da mão ( tinea manuum ); Diagnóstico das dermatofitoses; Tratamento das dermatofitoses; Candidíase; Onicomicose; Tratamento da onicomicose (apostila); Quadro-síntese das micoses"
+ },
+ {
+  "num": 9,
+  "id": "derm-cap-09",
+  "part": "II",
+  "partName": "Dermatoses infecciosas",
+  "kind": "teorica",
+  "short": "Hanseníase",
+  "title": "Hanseníase: doença neuro-dermatológica",
+  "topics": "O que devo saber: etiologia; Transmissão; Definição de caso: quando pensar em hanseníase; Exame físico: teste de sensibilidade; Avaliação neurológica simplificada (ANS); O formulário de avaliação; Classificação do grau de incapacidade física (GIF); Palpação dos nervos periféricos; Apoio laboratorial e de imagem; Baciloscopia; Teste rápido anti-PGL1; qPCR; Ultrassom de nervos periféricos; Eletroneuromiografia; Classificação; Imunologia da hanseníase: um espectro; Formas clínicas (Madri); Forma indeterminada (MHI) — paucibacilar; Forma tuberculoide (MHT) — paucibacilar; Forma dimorfa (MHD) — multibacilar; Forma virchowiana (MHV) — multibacilar; Tratamento: PQT-U; Efeitos colaterais; O que há de novo: esquema RIMOXCLAMIN; Planejamento reprodutivo, gestação e lactação; Contracepção; Gestação e lactação; Reações hansênicas; Tratamento das neuropatias hansênicas; Avaliação de contatos; Situação epidemiológica no Brasil"
+ },
+ {
+  "num": 10,
+  "id": "derm-cap-10",
+  "part": "III",
+  "partName": "Dermatoses inflamatórias, anexos, úlceras e farmacodermias",
+  "kind": "teorica",
+  "short": "Doenças eczematosas",
+  "title": "Doenças eczematosas",
+  "topics": "O que é um eczema; Eczema de estase (dermatite ocre); Eczema asteatósico (eczema senil); Eczema numular; Eczema disidrótico (disidrose); Eczema atópico (dermatite atópica); Quadro clínico; Critérios de Hanifin e Rajka; Tratamento; Dermatite de contato; Dermatite de contato por irritação primária; Dermatite alérgica de contato; Dermatite de contato fototóxica; Dermatite de contato fotoalérgica; Diagnóstico e tratamento"
+ },
+ {
+  "num": 11,
+  "id": "derm-cap-11",
+  "part": "III",
+  "partName": "Dermatoses inflamatórias, anexos, úlceras e farmacodermias",
+  "kind": "teorica",
+  "short": "Acne e cicatrizes de acne",
+  "title": "Acne e cicatrizes de acne",
+  "topics": "A acne e a unidade pilossebácea; Patogênese: os quatro pilares; A cascata inflamatória e a comedogênese; Clínica e classificação; Morfologia das lesões; Classificação do Grupo Latino-Americano de Estudos da Acne (GLADA); Formas especiais; Acne infantil; Acne da mulher adulta; Acne fulminans; Dieta; Acne induzida por drogas; Tratamento: princípios e cuidados com a pele; Tratamento tópico; Retinoides tópicos; Peróxido de benzoíla (PBO) 5%; Combinação fixa (PBO + retinoide); Antibióticos tópicos; Ácido azelaico 15% ou 20%; Niacinamida 4%; Tratamento oral: antibióticos; Regras contra a resistência bacteriana; Tratamento hormonal; Escolha da progestina do anticoncepcional; Isotretinoína oral; Indicações; Posologia; Riscos e controvérsias; Exames: o novo paradigma laboratorial; Efeitos adversos; Resumo do tratamento; Cicatrizes de acne: fisiopatologia e classificação; Tratamento das cicatrizes atróficas; Peelings; Técnica de CROSS; Preenchimento dérmico, excisão, elevação e enxerto por punch; Subcisão e solução de Klein; Microagulhamento; Tratamento das cicatrizes hipertróficas e queloides; Associação de técnicas (casos); Princípios da engenharia dérmica"
+ },
+ {
+  "num": 12,
+  "id": "derm-cap-12",
+  "part": "III",
+  "partName": "Dermatoses inflamatórias, anexos, úlceras e farmacodermias",
+  "kind": "teorica",
+  "short": "Alopecias",
+  "title": "Alopecias não cicatriciais e propedêutica capilar",
+  "topics": "O ponto de partida: o ciclo folicular normal; A primeira decisão: cicatricial ou não cicatricial; Sistematização do exame físico capilar; Principais achados e pontos importantes; Divisão anatômica do couro cabeludo; As lentes do diagnóstico: do macro ao micro; Teste de tração e tricograma; Teste de tração ( pull test ); Tricograma; Alopecia androgenética; Ponto-chave: a miniaturização do folículo; Diagnóstico clínico e sinais de alerta na mulher; Tratamento da alopecia androgenética; Minoxidil; Antiandrogênicos; Nutracêuticos; Procedimentos adjuvantes, transplante e camuflagem; Transplante capilar; Cosmiatria e camuflagem; Eflúvio telógeno; Alopecia areata; Gravidade e prognóstico (King BA et al., 2022); Diagnóstico; Tratamento da alopecia areata; Corticoterapia intralesional; Corticoterapia tópica e imunoterapia tópica; Outros tratamentos; Tinea capitis; Alopecia sifilítica; Alopecia de tração; Tricotilomania; Quadro-resumo das alopecias não cicatriciais; Xampus, condicionadores e mitos"
+ },
+ {
+  "num": 13,
+  "id": "derm-cap-13",
+  "part": "III",
+  "partName": "Dermatoses inflamatórias, anexos, úlceras e farmacodermias",
+  "kind": "teorica",
+  "short": "Úlceras de pele",
+  "title": "Úlceras de pele",
+  "topics": "Ferida: conceito, aguda e crônica; As fases da cicatrização; Os quatro tipos de úlcera; Úlcera venosa; Úlcera arterial; Úlcera neuropática; Úlceras inflamatórias; Lesão por pressão; Manejo local da úlcera crônica: o conceito TIME; Limpeza, desbridamento, biofilme e curativo; Limpeza; Desbridamento; Controle do biofilme; Curativo: manutenção do meio úmido"
+ },
+ {
+  "num": 14,
+  "id": "derm-cap-14",
+  "part": "III",
+  "partName": "Dermatoses inflamatórias, anexos, úlceras e farmacodermias",
+  "kind": "teorica",
+  "short": "Úlceras dos membros inferiores (aula complementar)",
+  "title": "Úlceras dos membros inferiores",
+  "topics": "Conceito, ferida crônica e epidemiologia; Tipos de úlceras: a classificação etiológica ampla; Infecciosas (slides 4–8); Medicamentos, neoplasias e doenças sistêmicas (slides 9–11); Doenças cutâneas, drogas, trauma, factícias e vasculares (slides 12–13); Bases da cicatrização cutânea: por que a ferida crônica não fecha; Classificação etiológica geral; Anamnese vascular estruturada; Semiologia da ferida e do membro; O índice tornozelo-braço (ITB) com Doppler portátil; Diagnóstico diferencial clínico das úlceras; Princípio da cicatrização, investigação laboratorial e biópsia; Investigação laboratorial (IWGDF/IDSA); Indicações de biópsia da úlcera; Úlcera venosa: fisiopatologia da hipertensão venosa; Úlcera venosa: estigmas, clínica e classificação CEAP; Estigmas da doença venosa avançada (slide 26); Características clínicas da úlcera venosa (slide 27); Classificação CEAP atualizada (Lurie F et al., 2020); Semiologia da úlcera venosa (slide 31); Úlcera venosa: tratamento e prevenção de recidiva; Terapia compressiva: o pilar (padrão-ouro absoluto); Contraindicações da compressão (SBACV 2023); Tratamento cirúrgico venoso (corrige a causa); Farmacoterapia venotônica (Cochrane; SBACV); Prevenção de recidiva venosa; Úlcera arterial: fisiopatologia e clínica; Características da lesão arterial (slide 41); Sinais físicos de isquemia (slide 42); Úlcera arterial: classificações, imagem e tratamento; Exames de imagem na DAOP; Estratégias de revascularização; Cuidados na úlcera seca (IWGDF); Pé diabético e úlcera neuropática; O mal perfurante plantar (apresentação patognomônica da úlcera neuropática); Exame com monofilamento e rastreio (SBD; ADA); Classificações de Wagner e da Universidade do Texas; Offloading: alívio de pressão (o pilar da úlcera neuropática); Prevenção de amputações no diabético; Úlceras atípicas: Martorell, pioderma gangrenoso e vasculites; Úlcera hipertensiva de Martorell; Pioderma gangrenoso; Úlceras vasculíticas (Chapel Hill 2012); Complicações, úlcera de Marjolin, úlceras infecciosas e calcifilaxia; Úlcera de Marjolin (câncer); Úlceras infecciosas específicas (Manual de Dermatologia Clínica SBD; Guia de Vigilância em Saúde MS); Calcifilaxia na doença renal; Tratamento local: preparo do leito (TIME), desbridamento e coberturas; Terapia por pressão negativa (VAC); Pontos-chave e checklist do plantão"
+ },
+ {
+  "num": 15,
+  "id": "derm-cap-15",
+  "part": "III",
+  "partName": "Dermatoses inflamatórias, anexos, úlceras e farmacodermias",
+  "kind": "teorica",
+  "short": "Reação cutânea adversa a medicamentos",
+  "title": "Reação cutânea adversa a medicamentos (farmacodermias)",
+  "topics": "Definição, frequência e fármacos mais comuns; Fisiopatologia: reação alérgica e não alérgica; Formas de menor gravidade I: prurido, exantema e urticária; Formas de menor gravidade II: eritema multiforme e erupção eczematosa; Formas de menor gravidade III: fotossensibilidade; Formas de menor gravidade IV: liquenoide, eritema pigmentar fixo e vasculite; Formas de menor gravidade V: erupção acneiforme e SDRIFE; Formas graves I: anafilaxia e eritrodermia; Formas graves II: síndrome de Stevens-Johnson; Manifestação clínica (slide 48); Formas graves III: necrólise epidérmica tóxica (síndrome de Lyell); Quadro clínico (slides 53–56); Diagnóstico e prognóstico (slide 57); Tratamento da NET (slide 58); O espectro SSJ–NET; Formas graves IV: DRESS e PEGA; Quando internar, diagnóstico, prognóstico e tratamento"
+ },
+ {
+  "num": 16,
+  "id": "derm-cap-16",
+  "part": "IV",
+  "partName": "Aulas práticas",
+  "kind": "pratica",
+  "short": "Aula prática 1 — Casos clínicos",
+  "title": "Aula prática 1 — Casos clínicos",
+  "topics": "O roteiro da aula prática; Caso clínico 1 — Herpes zóster; Herpes simples: doses lembradas na mesma aula (slides 8–10); Caso clínico 2 — Vitiligo; Caso clínico 3 — Psoríase em placas; Caso clínico 4 — Foliculite bacteriana; Caso clínico 5 — Tinea pedis; Dermatoscopia e lâmpada de Wood"
+ },
+ {
+  "num": 17,
+  "id": "derm-cap-17",
+  "part": "IV",
+  "partName": "Aulas práticas",
+  "kind": "pratica",
+  "short": "Aula prática 2 — Farmacodermias e fotoproteção",
+  "title": "Aula prática 2 — Dispositivos médicos, farmacodermias e fotoproteção",
+  "topics": "Caso clínico 1 — Lesão por dispositivo médico (dermatite de contato); Caso clínico 2 — Eritema pigmentar fixo; Caso clínico 3 — Fotossensibilidade induzida por medicamento; Fotossensibilidade medicamentosa: mais de 100 substâncias (slide 36); Erupção polimorfa à luz e tratamento das fotossensibilidades; Fotoproteção; Fotoprotetores × vitamina D"
+ },
+ {
+  "num": 18,
+  "id": "derm-cap-18",
+  "part": "IV",
+  "partName": "Aulas práticas",
+  "kind": "pratica",
+  "short": "Aula prática 3 — Doenças sistêmicas",
+  "title": "Aula prática 3 — Manifestações cutâneas de doenças sistêmicas",
+  "topics": "Lúpus eritematoso: lesões específicas e inespecíficas; Lúpus eritematoso cutâneo agudo (LECA); Lúpus eritematoso cutâneo subagudo (LECS); Lúpus eritematoso cutâneo crônico: discoide, túmido e profundo; LE discoide: o protótipo crônico (slide 14); Lúpus cutâneo: atividade × dano, risco sistêmico, diagnóstico e tratamento; O conceito CLASI; O espectro do risco sistêmico: ponto de virada; A matriz diagnóstica diferencial; A pirâmide de intervenção terapêutica; Dermatomiosite; Artrite reumatoide; Síndrome de Sjögren; Esclerodermia (esclerose sistêmica); Doença de Behçet; Quadro-resumo das doenças reumatológicas e roteiro dos casos; Caso 1 — Acantose nigricans e diabetes; Diabetes mellitus: o espectro cutâneo; Necrobiose lipoídica (slides 48–49); Granuloma anular (slides 50–51); Angiopatia e neuropatia (slides 52–55); Infecções e reações a medicamentos (slides 56–57); Caso 2 — Insuficiência vascular periférica: dermatite ocre e úlcera venosa; Caso 3 — Hipotireoidismo e tireopatias; Dislipidemias: xantomas; Doenças da adrenal; Doenças renais; Doenças inflamatórias intestinais e doença celíaca; Doenças hepáticas; Doenças oncológicas: dermatoses paraneoplásicas; Prurido; O olhar do clínico: regras de ouro na enfermaria"
+ },
+ {
+  "num": 19,
+  "id": "derm-cap-19",
+  "part": "IV",
+  "partName": "Aulas práticas",
+  "kind": "pratica",
+  "short": "Aula prática 4 — Cabelos e unhas",
+  "title": "Aula prática 4 — Afecções dos cabelos e unhas (anexos)",
+  "topics": "Caso clínico 1 — Alopecia areata; Distúrbios da haste capilar: transtornos com fragilidade; Caso clínico 2 — Psoríase (pele e unha); Caso clínico 3 — Melanoma do aparelho ungueal; Melanoníquia: da fisiológica ao melanoma; Anatomia e crescimento da unha; Alterações da superfície da unha; Unhas quebradiças; Sulcos transversais (linhas de Beau); Depressões puntiformes (pitting); Mudanças de cor da unha; Defeitos de fixação e espessamento; Infecções e tumores ungueais"
+ }
+]
