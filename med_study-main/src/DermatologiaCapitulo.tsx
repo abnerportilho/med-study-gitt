@@ -203,6 +203,18 @@ export function BlockView({ b, onZoom }: { b: Block; onZoom: (key: string, cap: 
   }
 }
 
+// Falha ao baixar o arquivo do capítulo (sem internet ou aba aberta antes de uma atualização).
+function LoadError({ what }: { what: string }) {
+  return (
+    <div className="card p-6 space-y-3">
+      <p className="text-sm text-rose-300">Não foi possível carregar {what}. Verifique a internet ou recarregue a página.</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold cursor-pointer">
+        Recarregar página
+      </button>
+    </div>
+  );
+}
+
 interface Section {
   head?: Extract<Block, { t: 'h2' }>;
   blocks: Block[];
@@ -262,7 +274,7 @@ export function DermatologiaCapitulo({ chapterId, onSelectTopic }: { chapterId: 
   const prev = idx > 0 ? CHAPTERS[idx - 1] : null;
   const next = idx >= 0 && idx < CHAPTERS.length - 1 ? CHAPTERS[idx + 1] : null;
 
-  if (error) return <div className="card p-6 text-sm text-rose-300">Não foi possível carregar este capítulo.</div>;
+  if (error) return <LoadError what="este capítulo" />;
   if (!chapter) return <div className="card p-6 text-sm text-ink-muted animate-pulse">Carregando capítulo…</div>;
 
   const figCount = chapter.blocks.reduce((n, b) => n + (b.t === 'figs' ? b.figs.length : 0), 0);
@@ -360,9 +372,12 @@ export function DermatologiaGlossario({ onSelectTopic }: { onSelectTopic: (id: s
   const [terms, setTerms] = useState<Term[] | null>(null);
   const [q, setQ] = useState('');
   const [letter, setLetter] = useState('');
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    import('./dermatologia/capitulos/glossario.json').then((m) => setTerms(m.default as Term[]));
+    import('./dermatologia/capitulos/glossario.json')
+      .then((m) => setTerms(m.default as Term[]))
+      .catch(() => setFailed(true));
   }, []);
 
   const fold = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -375,6 +390,7 @@ export function DermatologiaGlossario({ onSelectTopic }: { onSelectTopic: (id: s
     return terms.filter(([t, d]) => (!letter || initial(t) === letter) && (!f || fold(t).includes(f) || fold(d).includes(f)));
   }, [terms, q, letter]);
 
+  if (failed) return <LoadError what="o glossário" />;
   if (!terms) return <div className="card p-6 text-sm text-ink-muted animate-pulse">Carregando glossário…</div>;
 
   return (
