@@ -145,9 +145,10 @@ export default function HubPortalMain({
       subtitle: 'Passo a passo visual para uso correto de sprays com espaçador e inaladores de pó seco.',
       specialtyId: 'pneumologia',
       specialtyName: 'Pneumologia',
+      diseaseId: 'asma-plano-acao',
       icon: Flame,
-      badge: 'Em Expansão • Próxima Ficha',
-      status: 'em_breve',
+      badge: 'Disponível Agora • Imprimível A4',
+      status: 'disponivel',
       tags: ['Asma & DPOC', 'Espaçador', 'Pó Seco', 'Plano Semafórico'],
       description: 'Guia visual e plano de ação semafórico (Zona Verde, Amarela e Vermelha) para controle da asma, uso do medicamento de alívio e manutenção, além de higiene oral pós-corticoide.',
       targetAudience: 'Paciente e Familiar',
@@ -165,9 +166,10 @@ export default function HubPortalMain({
       subtitle: 'Checklist de inspeção diária, calçados adequados e prevenção de feridas e complicações neuropáticas.',
       specialtyId: 'endocrinologia',
       specialtyName: 'Endocrinologia',
+      diseaseId: 'pe-diabetico',
       icon: Syringe,
-      badge: 'Em Expansão • Próxima Ficha',
-      status: 'em_breve',
+      badge: 'Disponível Agora • Imprimível A4',
+      status: 'disponivel',
       tags: ['Diabetes', 'Neuropatia', 'Prevenção de Úlceras', 'Autocuidado'],
       description: 'Orientações práticas para o paciente diabético inspecionar os pés diariamente com espelho, escolha de meias claras e calçados sem costuras, hidratação correta e corte reto das unhas.',
       targetAudience: 'Paciente e Familiar',
@@ -177,66 +179,6 @@ export default function HubPortalMain({
         'Cuidados com temperatura da água e corte de unhas',
         'Orientações sobre calçados adequados e meias de algodão',
         'Sinais de alarme: calos, bolhas, perda de sensibilidade ou fissuras'
-      ]
-    },
-    {
-      id: 'dieta-dash',
-      title: 'Guia de Dieta DASH e Controle de Sódio na Hipertensão',
-      subtitle: 'Padrão alimentar cardioprotetor, temperos naturais e redução do consumo de sódio oculto.',
-      specialtyId: 'cardiologia',
-      specialtyName: 'Cardiologia',
-      icon: Heart,
-      badge: 'Em Expansão • Próxima Ficha',
-      status: 'em_breve',
-      tags: ['Dieta DASH', 'Hipertensão', 'Cardioproteção', 'Alimentos Naturais'],
-      description: 'Ficha de orientação dietética voltada a pacientes hipertensos para incentivar a ingestão de potássio vegetal, magnésio e fibras, ensinando a identificar sódio oculto em ultraprocessados.',
-      targetAudience: 'Paciente e Familiar',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'Substitutos práticos para o sal de cozinha (sal de ervas, limão, alho)',
-        'Orientações de consumo de frutas, sementes e laticínios magros',
-        'Identificação de sódio oculto na rotulagem nutricional',
-        'Metas de atividade física e controle pressórico não medicamentoso'
-      ]
-    },
-    {
-      id: 'tro-pediatrica',
-      title: 'Orientações de Reidratação Oral na Diarreia Infantil (TRO)',
-      subtitle: 'Manejo domiciliar da gastroenterite aguda com SRO, alimentação e sinais de alerta.',
-      specialtyId: 'pediatria',
-      specialtyName: 'Pediatria & Emergência',
-      icon: Baby,
-      badge: 'Em Expansão • Próxima Ficha',
-      status: 'em_breve',
-      tags: ['Pediatria', 'Diarreia Aguda', 'Soro Caseiro / OMS', 'Sinais de Desidratação'],
-      description: 'Guia passo a passo para pais e cuidadores sobre o preparo correto dos sais de reidratação oral (OMS), oferta em pequenas quantidades frequentes e sinais de desidratação grave.',
-      targetAudience: 'Paciente e Familiar',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'Como preparar e ofertar os sais de reidratação oral (TRO Plano A)',
-        'Alimentação contínua adequada para a idade (manter aleitamento)',
-        'Zinco oral e hidratação domiciliar fracionada em colher ou copo',
-        'Sinais de alerta: olhos encovados, saliva seca, letargia e sangue nas fezes'
-      ]
-    },
-    {
-      id: 'dermatologia-cuidados-pele',
-      title: 'Guia de Fotoproteção, Barreira Cutânea & Regra ABCDE',
-      subtitle: 'Orientações práticas de prevenção do câncer de pele, hidratação pós-banho e autoexame de manchas.',
-      specialtyId: 'dermatologia',
-      specialtyName: 'Dermatologia',
-      icon: Sun,
-      badge: 'Em Breve • Guia A4',
-      status: 'em_breve',
-      tags: ['Fotoproteção', 'Filtro Solar', 'Regra ABCDE', 'Barreira Cutânea', 'Dermatologia'],
-      description: 'Guia impresso para orientação de pacientes sobre a regra da colher de chá para filtro solar FPS ≥ 30, reaplicação a cada 2 horas, autoexame mensal de pintas pela regra ABCDE e hidratação de peles xeróticas ou atópicas.',
-      targetAudience: 'Paciente e Familiar',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'Regra da colher de chá para aplicação homogênea do protetor solar corporal e facial',
-        'Autoexame mensal ilustrado com a Regra ABCDE (Assimetria, Bordas, Cores, Diâmetro e Evolução)',
-        'Cuidados com a barreira cutânea: banhos mornos e curtos com sabonetes syndet suaves',
-        'Orientações imediatas sobre sinais de alarme em feridas ou pintas que sangram'
       ]
     }
   ], []);
@@ -652,9 +594,7 @@ export default function HubPortalMain({
                 { id: 'cardiologia', label: 'Cardiologia' },
                 { id: 'endocrinologia', label: 'Endocrinologia' },
                 { id: 'nefrologia', label: 'Nefrologia' },
-                { id: 'pneumologia', label: 'Pneumologia' },
-                { id: 'pediatria', label: 'Pediatria' },
-                { id: 'dermatologia', label: 'Dermatologia' }
+                { id: 'pneumologia', label: 'Pneumologia' }
               ].map(cat => (
                 <button
                   key={cat.id}
