@@ -99,6 +99,8 @@ import DistopiasIncontinenciaMain from './DistopiasIncontinenciaMain';
 import DislipidemiaMain from './DislipidemiaMain';
 import PreventCalculator from './PreventCalculator';
 import MapaGlicemicoMain from './MapaGlicemicoMain';
+import AsmaPlanoAcaoMain from './AsmaPlanoAcaoMain';
+import PeDiabeticoMain from './PeDiabeticoMain';
 import MrpaDiarioMain from './MrpaDiarioMain';
 import HubPortalMain from './HubPortalMain';
 import MedicamentosMain from './MedicamentosMain';
@@ -204,6 +206,7 @@ const SPECIALTIES = [
     icon: LungsIcon,
     diseases: [
       { id: 'asma', name: 'Asma' },
+      { id: 'asma-plano-acao', name: 'Plano de Ação & Técnica Inalatória na Asma (A4)' },
       { id: 'derrame-pleural', name: 'Derrame Pleural' },
       { id: 'intersticiais', name: 'Doenças Intersticiais' },
       { id: 'dpoc', name: 'DPOC' },
@@ -316,6 +319,7 @@ const SPECIALTIES = [
     icon: Syringe,
     diseases: [
       { id: 'mapa-glicemico', name: 'Mapa & Diário de Glicemia (A4 & Personalizável)' },
+      { id: 'pe-diabetico', name: 'Cuidados com os Pés no Diabetes (A4)' },
       { id: 'diabetes-gestacional', name: 'Diabetes Gestacional (DMG)' },
       { id: 'dislipidemias', name: 'Dislipidemias (Colesterol & Triglicerídeos)' }
     ]
@@ -1579,6 +1583,10 @@ export default function App() {
           <MapaGlicemicoMain />
         ) : selectedDisease === 'mrpa-diario' ? (
           <MrpaDiarioMain />
+        ) : selectedDisease === 'asma-plano-acao' ? (
+          <AsmaPlanoAcaoMain />
+        ) : selectedDisease === 'pe-diabetico' ? (
+          <PeDiabeticoMain />
         ) : selectedDisease === 'dislipidemias' ? (
           <DislipidemiaMain />
         ) : selectedDisease === 'diabetes-gestacional' ? (
