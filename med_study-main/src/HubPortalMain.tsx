@@ -119,52 +119,6 @@ export default function HubPortalMain({
       ]
     },
     {
-      id: 'ptu-vasculite',
-      title: 'Guia de Segurança: Propiltiouracil (PTU) & Risco de Vasculite',
-      subtitle: 'Alerta sobre vasculite ANCA no uso prolongado de PTU, sintomas (pele, juntas, febre) e suspensão imediata.',
-      specialtyId: 'endocrinologia',
-      specialtyName: 'Endocrinologia & Fármacos',
-      diseaseId: 'propiltiouracil',
-      icon: ShieldAlert,
-      badge: 'Disponível Agora • Estudo SciELO',
-      status: 'disponivel',
-      tags: ['Propiltiouracil (PTU)', 'Hipertireoidismo', 'Vasculite ANCA', 'SciELO', 'Farmacovigilância'],
-      description: 'Guia clínico e de orientação sobre o risco de vasculite ANCA no uso prolongado do PTU. Inclui tríade clássica de sintomas (pele, juntas, febre), conduta médica de interrupção imediata, corticoterapia e critérios de urgência.',
-      targetAudience: 'Profissional e Paciente',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'O que é o PTU: tratamento do hipertireoidismo e tempestade tireoidiana',
-        'Fisiopatologia autoimune: produção anômala de anticorpos p-ANCA (anti-mieloperoxidase)',
-        'Sintomas comuns: manchas/púrpura na pele, dor forte nas juntas e febre',
-        'Casos graves: glomerulonefrite crescêntica e hemorragia pulmonar (risco de óbito)',
-        'Conduta médica imediata: suspensão imperativa do remédio e corticoterapia',
-        'Aviso ao paciente: recomendação explícita de buscar pronto-socorro se houver manchas ou febre'
-      ]
-    },
-    {
-      id: 'hidralazina-dile',
-      title: 'Guia de Segurança: Hidralazina & Lúpus Induzido por Drogas (DILE)',
-      subtitle: 'Alerta sobre lúpus farmaco-induzido, acetiladores lentos (NAT2), anticorpos anti-histona e conduta de suspensão.',
-      specialtyId: 'cardiologia',
-      specialtyName: 'Cardiologia & Fármacos',
-      diseaseId: 'hidralazina',
-      icon: ShieldAlert,
-      badge: 'Disponível Agora • Alerta DILE',
-      status: 'disponivel',
-      tags: ['Hidralazina', 'Lúpus por Medicamento', 'Anti-Histona', 'Taquicardia Reflexa', 'Farmacovigilância'],
-      description: 'Guia clínico e de orientação sobre o risco de Lúpus Induzido por Drogas (DILE) pelo uso contínuo de Hidralazina. Detalha a fisiopatologia em acetiladores lentos, sintomas clássicos (artralgia, serosite, febre), anticorpos anti-histona e rápida reversibilidade após interrupção da droga.',
-      targetAudience: 'Profissional e Paciente',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'Efeitos vasculares da Hidralazina: dilatação arteriolar e risco de taquicardia reflexa',
-        'Fisiopatologia do DILE: acetilação lenta (NAT2) e formação de anticorpos Anti-Histona',
-        'Sintomas articulares (poliartralgia), pleurite, pericardite e febre inexplicada',
-        'Quadro comparativo de diferenciação do Lúpus Eritematoso Sistêmico (LES clássico)',
-        'Conduta imediata: suspensão da hidralazina como medida mandatória curativa',
-        'Orientações ao paciente: sinais de alarme e importância da avaliação médica imediata'
-      ]
-    },
-    {
       id: 'mrpa-diario',
       title: 'Diário de Automonitorização da Pressão Arterial (MRPA 7 Dias)',
       subtitle: 'Protocolo de aferição domiciliar da pressão arterial pela manhã e noite com critérios diagnósticos.',

@@ -50,14 +50,9 @@ const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b,
 
 export default function MrpaDiarioMain() {
   const [patientName, setPatientName] = useState('');
-  const [doctorName, setDoctorName] = useState('Dr(a). Médico(a) / Cardiologia');
-  const [clinicName, setClinicName] = useState('Ambulatório de Cardiologia & Hipertensão');
   const [currentMeds, setCurrentMeds] = useState('Losartana 50mg 12/12h + Hidroclorotiazida 25mg pela manhã');
   const [arm, setArm] = useState('Esquerdo');
   const [device, setDevice] = useState('Automático de braço, validado');
-  const [customInstructions, setCustomInstructions] = useState(
-    'Meça pela manhã ANTES de tomar os remédios e do café, e à noite ANTES do jantar. Traga esta folha e o aparelho na próxima consulta.',
-  );
 
   const [numDays, setNumDays] = useState(7);
   const [perSession, setPerSession] = useState(2);
@@ -216,14 +211,13 @@ export default function MrpaDiarioMain() {
       text += ` | Manhã ${stats.morning.sys ?? '-'}/${stats.morning.dia ?? '-'} | Noite ${stats.evening.sys ?? '-'}/${stats.evening.dia ?? '-'}\n`;
       if (stats.interpretation) text += `Interpretação: ${stats.interpretation}\n`;
     }
-    text += `\nORIENTAÇÕES: ${customInstructions}\n`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
   const docProps = {
-    patientName, doctorName, clinicName, currentMeds, arm, device, customInstructions,
+    patientName, currentMeds, arm, device,
     protocolLabel: protocol.label, perSession: protocol.perSession, includeHr, discardFirstDay, records, stats,
   };
 
@@ -312,14 +306,6 @@ export default function MrpaDiarioMain() {
               <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Paciente</span>
               <input className={inputCls} value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder="Deixe em branco para escrever à mão" />
             </label>
-            <label className="space-y-1">
-              <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Médico(a)</span>
-              <input className={inputCls} value={doctorName} onChange={(e) => setDoctorName(e.target.value)} />
-            </label>
-            <label className="space-y-1">
-              <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Serviço / Ambulatório</span>
-              <input className={inputCls} value={clinicName} onChange={(e) => setClinicName(e.target.value)} />
-            </label>
             <label className="space-y-1 md:col-span-2">
               <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Medicação anti-hipertensiva em uso</span>
               <input className={inputCls} value={currentMeds} onChange={(e) => setCurrentMeds(e.target.value)} />
@@ -400,10 +386,6 @@ export default function MrpaDiarioMain() {
                 <input type="date" className="rounded bg-bg border border-line px-1.5 py-0.5 text-[11px]" value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={!autoFillDates} />
               </label>
             </div>
-            <label className="space-y-1 md:col-span-2">
-              <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Orientações do médico (saem na folha)</span>
-              <textarea className={`${inputCls} resize-y`} rows={2} value={customInstructions} onChange={(e) => setCustomInstructions(e.target.value)} />
-            </label>
           </div>
 
           {/* Tabela editável */}
@@ -584,16 +566,13 @@ function StatBox({ label, value, highlight }: { label: string; value: { n: numbe
 // FOLHA A4 (retrato, 1 página) — também usada na prévia da tela
 // ==========================================================================
 function A4MrpaPrintDocument({
-  patientName, doctorName, clinicName, currentMeds, arm, device, customInstructions, protocolLabel, perSession,
+  patientName, currentMeds, arm, device, protocolLabel, perSession,
   includeHr, discardFirstDay, records, stats, isPrintPortal = false,
 }: {
   patientName: string;
-  doctorName: string;
-  clinicName: string;
   currentMeds: string;
   arm: string;
   device: string;
-  customInstructions: string;
   protocolLabel: string;
   perSession: number;
   includeHr: boolean;
@@ -628,13 +607,7 @@ function A4MrpaPrintDocument({
       style={{ color: '#0f172a', backgroundColor: '#ffffff' }}
     >
       <div className="border-b-2 border-rose-600 pb-2 mb-2.5">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-base font-black text-slate-900 tracking-tight uppercase">Diário de Automonitorização da Pressão Arterial (MRPA)</h1>
-            <p className="text-[10px] text-slate-500 font-semibold">{clinicName}</p>
-          </div>
-          <div className="text-right text-[10.5px] font-bold text-slate-700 shrink-0">{doctorName}</div>
-        </div>
+        <h1 className="text-base font-black text-slate-900 tracking-tight uppercase">Diário de Automonitorização da Pressão Arterial (MRPA)</h1>
         <div className="grid grid-cols-4 gap-2 mt-2 pt-2 border-t border-slate-200">
           <div className="col-span-2">
             <span className="font-bold text-slate-500 block text-[9px] uppercase tracking-wider">Paciente:</span>
@@ -725,19 +698,9 @@ function A4MrpaPrintDocument({
           <span className="font-bold text-red-700 block mb-0.5 uppercase tracking-wide">⚠️ Sinais de alarme</span>
           <p className="leading-tight mb-1">{ALARM}</p>
           <p className="leading-tight text-slate-600">{ALARM_NO_SYMPTOMS}</p>
-          <span className="font-bold text-rose-900 block mt-1.5 mb-0.5 uppercase tracking-wide">Orientações do seu médico</span>
-          <p className="leading-tight">{customInstructions || 'Trazer esta folha preenchida na próxima consulta.'}</p>
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-1.5 border-t border-slate-300 text-[9px] text-slate-600">
-        <div>
-          Assinatura / Carimbo Médico: <span className="font-mono text-slate-400">__________________________________________</span>
-        </div>
-        <div>
-          Data da Consulta: <span className="font-mono text-slate-700 font-bold">{new Date().toLocaleDateString('pt-BR')}</span>
-        </div>
-      </div>
     </div>
   );
 }
