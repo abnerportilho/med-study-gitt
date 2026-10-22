@@ -99,6 +99,7 @@ import DistopiasIncontinenciaMain from './DistopiasIncontinenciaMain';
 import DislipidemiaMain from './DislipidemiaMain';
 import PreventCalculator from './PreventCalculator';
 import MapaGlicemicoMain from './MapaGlicemicoMain';
+import MrpaDiarioMain from './MrpaDiarioMain';
 import HubPortalMain from './HubPortalMain';
 import MedicamentosMain from './MedicamentosMain';
 import RastreadorInteracoesMain from './RastreadorInteracoesMain';
@@ -220,6 +221,7 @@ const SPECIALTIES = [
       { id: 'valvulares', name: 'Doenças Valvares' },
       { id: 'reumatica', name: 'Febre Reumática' },
       { id: 'has', name: 'Hipertensão Arterial Sistêmica' },
+      { id: 'mrpa-diario', name: 'Diário de MRPA (A4 & Editável)' },
       { id: 'ic', name: 'Insuficiência Cardíaca' },
       { id: 'scc', name: 'Síndrome Coronariana Crônica' }
     ]
@@ -1575,6 +1577,8 @@ export default function App() {
           <PreventCalculator />
         ) : selectedDisease === 'mapa-glicemico' ? (
           <MapaGlicemicoMain />
+        ) : selectedDisease === 'mrpa-diario' ? (
+          <MrpaDiarioMain />
         ) : selectedDisease === 'dislipidemias' ? (
           <DislipidemiaMain />
         ) : selectedDisease === 'diabetes-gestacional' ? (
