@@ -20,6 +20,8 @@ export default defineConfig(({mode}) => {
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
+    // Uma única pasta public: a do app (med_study-main/public).
+    publicDir: path.resolve(__dirname, 'med_study-main/public'),
     build: {
       outDir: 'dist',
       emptyOutDir: true,

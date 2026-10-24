@@ -119,62 +119,17 @@ export default function HubPortalMain({
       ]
     },
     {
-      id: 'ptu-vasculite',
-      title: 'Guia de Segurança: Propiltiouracil (PTU) & Risco de Vasculite',
-      subtitle: 'Alerta sobre vasculite ANCA no uso prolongado de PTU, sintomas (pele, juntas, febre) e suspensão imediata.',
-      specialtyId: 'endocrinologia',
-      specialtyName: 'Endocrinologia & Fármacos',
-      diseaseId: 'propiltiouracil',
-      icon: ShieldAlert,
-      badge: 'Disponível Agora • Estudo SciELO',
-      status: 'disponivel',
-      tags: ['Propiltiouracil (PTU)', 'Hipertireoidismo', 'Vasculite ANCA', 'SciELO', 'Farmacovigilância'],
-      description: 'Guia clínico e de orientação sobre o risco de vasculite ANCA no uso prolongado do PTU. Inclui tríade clássica de sintomas (pele, juntas, febre), conduta médica de interrupção imediata, corticoterapia e critérios de urgência.',
-      targetAudience: 'Profissional e Paciente',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'O que é o PTU: tratamento do hipertireoidismo e tempestade tireoidiana',
-        'Fisiopatologia autoimune: produção anômala de anticorpos p-ANCA (anti-mieloperoxidase)',
-        'Sintomas comuns: manchas/púrpura na pele, dor forte nas juntas e febre',
-        'Casos graves: glomerulonefrite crescêntica e hemorragia pulmonar (risco de óbito)',
-        'Conduta médica imediata: suspensão imperativa do remédio e corticoterapia',
-        'Aviso ao paciente: recomendação explícita de buscar pronto-socorro se houver manchas ou febre'
-      ]
-    },
-    {
-      id: 'hidralazina-dile',
-      title: 'Guia de Segurança: Hidralazina & Lúpus Induzido por Drogas (DILE)',
-      subtitle: 'Alerta sobre lúpus farmaco-induzido, acetiladores lentos (NAT2), anticorpos anti-histona e conduta de suspensão.',
-      specialtyId: 'cardiologia',
-      specialtyName: 'Cardiologia & Fármacos',
-      diseaseId: 'hidralazina',
-      icon: ShieldAlert,
-      badge: 'Disponível Agora • Alerta DILE',
-      status: 'disponivel',
-      tags: ['Hidralazina', 'Lúpus por Medicamento', 'Anti-Histona', 'Taquicardia Reflexa', 'Farmacovigilância'],
-      description: 'Guia clínico e de orientação sobre o risco de Lúpus Induzido por Drogas (DILE) pelo uso contínuo de Hidralazina. Detalha a fisiopatologia em acetiladores lentos, sintomas clássicos (artralgia, serosite, febre), anticorpos anti-histona e rápida reversibilidade após interrupção da droga.',
-      targetAudience: 'Profissional e Paciente',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'Efeitos vasculares da Hidralazina: dilatação arteriolar e risco de taquicardia reflexa',
-        'Fisiopatologia do DILE: acetilação lenta (NAT2) e formação de anticorpos Anti-Histona',
-        'Sintomas articulares (poliartralgia), pleurite, pericardite e febre inexplicada',
-        'Quadro comparativo de diferenciação do Lúpus Eritematoso Sistêmico (LES clássico)',
-        'Conduta imediata: suspensão da hidralazina como medida mandatória curativa',
-        'Orientações ao paciente: sinais de alarme e importância da avaliação médica imediata'
-      ]
-    },
-    {
       id: 'mrpa-diario',
       title: 'Diário de Automonitorização da Pressão Arterial (MRPA 7 Dias)',
       subtitle: 'Protocolo de aferição domiciliar da pressão arterial pela manhã e noite com critérios diagnósticos.',
       specialtyId: 'cardiologia',
       specialtyName: 'Cardiologia',
+      diseaseId: 'mrpa-diario',
       icon: Heart,
-      badge: 'Em Expansão • Próxima Ficha',
-      status: 'em_breve',
+      badge: 'Disponível Agora • Imprimível A4',
+      status: 'disponivel',
       tags: ['Hipertensão', 'MRPA', 'Técnica de Aferição', 'Registro 7 Dias'],
-      description: 'Ficha padronizada para registro diário de pressão arterial domiciliar por 7 dias seguidos (duas medidas pela manhã e duas à noite), orientações de repouso prévio e sinais de alerta.',
+      description: 'Ficha editável para registro da pressão arterial domiciliar (7 dias com 2 medidas ou 5/7 dias com 3 medidas por período), cálculo automático das médias sem o 1º dia, interpretação com a PA do consultório e folha A4 limpa para o paciente preencher a caneta.',
       targetAudience: 'Paciente e Familiar',
       paperFormat: 'A4 Retrato',
       features: [
@@ -190,9 +145,10 @@ export default function HubPortalMain({
       subtitle: 'Passo a passo visual para uso correto de sprays com espaçador e inaladores de pó seco.',
       specialtyId: 'pneumologia',
       specialtyName: 'Pneumologia',
+      diseaseId: 'asma-plano-acao',
       icon: Flame,
-      badge: 'Em Expansão • Próxima Ficha',
-      status: 'em_breve',
+      badge: 'Disponível Agora • Imprimível A4',
+      status: 'disponivel',
       tags: ['Asma & DPOC', 'Espaçador', 'Pó Seco', 'Plano Semafórico'],
       description: 'Guia visual e plano de ação semafórico (Zona Verde, Amarela e Vermelha) para controle da asma, uso do medicamento de alívio e manutenção, além de higiene oral pós-corticoide.',
       targetAudience: 'Paciente e Familiar',
@@ -210,9 +166,10 @@ export default function HubPortalMain({
       subtitle: 'Checklist de inspeção diária, calçados adequados e prevenção de feridas e complicações neuropáticas.',
       specialtyId: 'endocrinologia',
       specialtyName: 'Endocrinologia',
+      diseaseId: 'pe-diabetico',
       icon: Syringe,
-      badge: 'Em Expansão • Próxima Ficha',
-      status: 'em_breve',
+      badge: 'Disponível Agora • Imprimível A4',
+      status: 'disponivel',
       tags: ['Diabetes', 'Neuropatia', 'Prevenção de Úlceras', 'Autocuidado'],
       description: 'Orientações práticas para o paciente diabético inspecionar os pés diariamente com espelho, escolha de meias claras e calçados sem costuras, hidratação correta e corte reto das unhas.',
       targetAudience: 'Paciente e Familiar',
@@ -222,66 +179,6 @@ export default function HubPortalMain({
         'Cuidados com temperatura da água e corte de unhas',
         'Orientações sobre calçados adequados e meias de algodão',
         'Sinais de alarme: calos, bolhas, perda de sensibilidade ou fissuras'
-      ]
-    },
-    {
-      id: 'dieta-dash',
-      title: 'Guia de Dieta DASH e Controle de Sódio na Hipertensão',
-      subtitle: 'Padrão alimentar cardioprotetor, temperos naturais e redução do consumo de sódio oculto.',
-      specialtyId: 'cardiologia',
-      specialtyName: 'Cardiologia',
-      icon: Heart,
-      badge: 'Em Expansão • Próxima Ficha',
-      status: 'em_breve',
-      tags: ['Dieta DASH', 'Hipertensão', 'Cardioproteção', 'Alimentos Naturais'],
-      description: 'Ficha de orientação dietética voltada a pacientes hipertensos para incentivar a ingestão de potássio vegetal, magnésio e fibras, ensinando a identificar sódio oculto em ultraprocessados.',
-      targetAudience: 'Paciente e Familiar',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'Substitutos práticos para o sal de cozinha (sal de ervas, limão, alho)',
-        'Orientações de consumo de frutas, sementes e laticínios magros',
-        'Identificação de sódio oculto na rotulagem nutricional',
-        'Metas de atividade física e controle pressórico não medicamentoso'
-      ]
-    },
-    {
-      id: 'tro-pediatrica',
-      title: 'Orientações de Reidratação Oral na Diarreia Infantil (TRO)',
-      subtitle: 'Manejo domiciliar da gastroenterite aguda com SRO, alimentação e sinais de alerta.',
-      specialtyId: 'pediatria',
-      specialtyName: 'Pediatria & Emergência',
-      icon: Baby,
-      badge: 'Em Expansão • Próxima Ficha',
-      status: 'em_breve',
-      tags: ['Pediatria', 'Diarreia Aguda', 'Soro Caseiro / OMS', 'Sinais de Desidratação'],
-      description: 'Guia passo a passo para pais e cuidadores sobre o preparo correto dos sais de reidratação oral (OMS), oferta em pequenas quantidades frequentes e sinais de desidratação grave.',
-      targetAudience: 'Paciente e Familiar',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'Como preparar e ofertar os sais de reidratação oral (TRO Plano A)',
-        'Alimentação contínua adequada para a idade (manter aleitamento)',
-        'Zinco oral e hidratação domiciliar fracionada em colher ou copo',
-        'Sinais de alerta: olhos encovados, saliva seca, letargia e sangue nas fezes'
-      ]
-    },
-    {
-      id: 'dermatologia-cuidados-pele',
-      title: 'Guia de Fotoproteção, Barreira Cutânea & Regra ABCDE',
-      subtitle: 'Orientações práticas de prevenção do câncer de pele, hidratação pós-banho e autoexame de manchas.',
-      specialtyId: 'dermatologia',
-      specialtyName: 'Dermatologia',
-      icon: Sun,
-      badge: 'Em Breve • Guia A4',
-      status: 'em_breve',
-      tags: ['Fotoproteção', 'Filtro Solar', 'Regra ABCDE', 'Barreira Cutânea', 'Dermatologia'],
-      description: 'Guia impresso para orientação de pacientes sobre a regra da colher de chá para filtro solar FPS ≥ 30, reaplicação a cada 2 horas, autoexame mensal de pintas pela regra ABCDE e hidratação de peles xeróticas ou atópicas.',
-      targetAudience: 'Paciente e Familiar',
-      paperFormat: 'A4 Retrato',
-      features: [
-        'Regra da colher de chá para aplicação homogênea do protetor solar corporal e facial',
-        'Autoexame mensal ilustrado com a Regra ABCDE (Assimetria, Bordas, Cores, Diâmetro e Evolução)',
-        'Cuidados com a barreira cutânea: banhos mornos e curtos com sabonetes syndet suaves',
-        'Orientações imediatas sobre sinais de alarme em feridas ou pintas que sangram'
       ]
     }
   ], []);
@@ -697,9 +594,7 @@ export default function HubPortalMain({
                 { id: 'cardiologia', label: 'Cardiologia' },
                 { id: 'endocrinologia', label: 'Endocrinologia' },
                 { id: 'nefrologia', label: 'Nefrologia' },
-                { id: 'pneumologia', label: 'Pneumologia' },
-                { id: 'pediatria', label: 'Pediatria' },
-                { id: 'dermatologia', label: 'Dermatologia' }
+                { id: 'pneumologia', label: 'Pneumologia' }
               ].map(cat => (
                 <button
                   key={cat.id}
@@ -1061,7 +956,7 @@ export default function HubPortalMain({
                 name: 'Dermatologia',
                 icon: Sun,
                 color: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-                diseases: ['Módulo em Construção Colaborativa']
+                diseases: ['Manual em 19 Capítulos', 'Pênfigo', 'Psoríase']
               }
             ].map(spec => {
               const IconComp = spec.icon;
