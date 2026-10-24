@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Search, ChevronRight, BookOpen, Stethoscope, Activity, Heart, Wind, Dna, Droplet, Sun, Brain } from 'lucide-react';
 import Fuse from 'fuse.js';
 import DERM_MANIFEST from './dermatologia/manifest.json';
+import { TOPICOS as DERM_TOPICOS } from './dermatologia/topicos';
 
 // Define the searchable index
 // Ideally this would be generated from the content, but we'll create a robust map here.
@@ -76,6 +77,7 @@ const SEARCH_DATA = [
   { id: 'vigilancia-notificacao', name: 'Vigilância em Saúde e Notificação Compulsória', specialtyId: 'preventiva', specialtyName: 'Medicina Preventiva', content: 'Sinan, notificação compulsória, imediata, semanal, vigilância epidemiológica, sanitária, ambiental' },
 
   ...DERM_MANIFEST.map(c => ({ id: c.id, name: `Dermatologia ${c.num}. ${c.short}`, specialtyId: 'dermatologia', specialtyName: 'Dermatologia', content: `${c.title}; ${c.topics}` })),
+  ...DERM_TOPICOS.map(t => ({ id: t.id, name: t.name, specialtyId: 'dermatologia', specialtyName: 'Dermatologia', content: `${t.group}; ${t.kw}; ${t.tabs.map(x => x.label).join(', ')}` })),
   { id: 'derm-glossario', name: 'Glossário de Dermatologia', specialtyId: 'dermatologia', specialtyName: 'Dermatologia', content: 'Glossário, termos, definições, dermatologia' },
   { id: 'penfigo', name: 'Pênfigo', specialtyId: 'dermatologia', specialtyName: 'Dermatologia', content: 'Pênfigo vulgar, pênfigo foliáceo, fogo selvagem, paraneoplásico, desmogleína, acantólise, Nikolsky, bolha flácida, imunofluorescência, rituximabe, penfigoide bolhoso' },
   { id: 'psoriase', name: 'Psoríase', specialtyId: 'dermatologia', specialtyName: 'Dermatologia', content: 'Psoríase em placas, gutata, invertida, eritrodérmica, pustulosa, ungueal, artrite psoriásica, PASI, BSA, DLQI, Auspitz, Koebner, metotrexato, acitretina, ciclosporina, imunobiológicos, anti-TNF, anti-IL-17, anti-IL-23' },

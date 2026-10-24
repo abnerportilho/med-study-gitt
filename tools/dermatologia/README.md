@@ -16,5 +16,11 @@ pip install beautifulsoup4
 python3 ../tools/dermatologia/convert.py caminho/manual-dermatologia.html src/dermatologia public/derm
 ```
 
-O app lê esses arquivos em `src/DermatologiaCapitulo.tsx`. Pênfigo e Psoríase são escritos à mão em
+O app lê esses arquivos em `src/DermatologiaCapitulo.tsx`.
+
+Os **tópicos por doença** (Impetigo, Herpes-zóster, Hanseníase, Acne, SSJ/NET…) ficam em
+`med_study-main/src/dermatologia/topicos.ts`: cada tópico lista, por aba, as seções dos capítulos
+que tratam da doença (teoria, caso da aula prática, aula complementar) e o app recorta o texto
+dos próprios capítulos (`src/DermatologiaTopico.tsx`). Depois de regenerar os capítulos, rode
+`npm test`: o teste `topicos.test.ts` avisa se alguma seção apontada deixou de existir. Pênfigo e Psoríase são escritos à mão em
 `src/PenfigoMain.tsx` e `src/PsoriaseMain.tsx`.

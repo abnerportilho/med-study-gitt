@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
-import { Sun, BookOpen, Layers, Droplets } from 'lucide-react';
+import { Sun, BookOpen, Layers, Droplets, Stethoscope } from 'lucide-react';
 import { CHAPTERS, DermatologiaCapitulo, DermatologiaGlossario } from './DermatologiaCapitulo';
 import PenfigoMain from './PenfigoMain';
 import PsoriaseMain from './PsoriaseMain';
+import { DermatologiaTopico, GROUP_ICON } from './DermatologiaTopico';
+import { TOPICOS, TOPICO_GROUPS } from './dermatologia/topicos';
 
 // ==========================================================================
-// Dermatologia: Manual de Dermatologia (19 capítulos em 4 partes + glossário)
-// e os tópicos de doença Pênfigo e Psoríase. Cada capítulo é um item do menu.
+// Dermatologia: Manual de Dermatologia (19 capítulos em 4 partes + glossário), os tópicos
+// por doença montados com as seções do manual (dermatologia/topicos.ts) e os tópicos
+// escritos à mão de Pênfigo e Psoríase. Cada capítulo e cada tópico é um item do menu.
 // ==========================================================================
 
 interface DermatologiaMainProps {
@@ -17,19 +20,36 @@ interface DermatologiaMainProps {
 
 export const DERM_GLOSSARIO_ID = 'derm-glossario';
 export const DERM_DISEASES = [
-  { id: 'penfigo', name: 'Pênfigo', icon: Droplets },
-  { id: 'psoriase', name: 'Psoríase', icon: Layers },
+  { id: 'penfigo', name: 'Pênfigo', icon: Droplets, group: 'Inflamatórias e pigmentares' },
+  { id: 'psoriase', name: 'Psoríase', icon: Layers, group: 'Inflamatórias e pigmentares' },
 ];
+
+// Tópicos de cada grupo, na ordem do menu (os escritos à mão entram no seu grupo).
+const GROUP_TOPICS = TOPICO_GROUPS.map((g) => ({
+  group: g,
+  items: [...TOPICOS.filter((t) => t.group === g), ...DERM_DISEASES.filter((d) => d.group === g)].map((t) => ({ id: t.id, name: t.name })),
+}));
 
 const PARTS = Array.from(new Map(CHAPTERS.map((c) => [c.part, c.partName])).entries());
 
 export default function DermatologiaMain({ initialTopic = CHAPTERS[0].id, onSelectTopic }: DermatologiaMainProps) {
   const topic = initialTopic;
   // Cada tópico remonta o módulo (key no App): volta ao topo ao trocar de capítulo.
-  useEffect(() => window.scrollTo({ top: 0 }), []);
+  // Sem retornar o valor: no Chrome recente scrollTo devolve uma Promise, e o React a
+  // trataria como função de limpeza ("destroy is not a function").
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
   const chapter = CHAPTERS.find((c) => c.id === topic);
+  const topico = TOPICOS.find((t) => t.id === topic);
   const group = chapter ? chapter.part : topic === DERM_GLOSSARIO_ID ? 'glossario' : 'doencas';
   const groupChapters = chapter ? CHAPTERS.filter((c) => c.part === chapter.part) : [];
+  const diseaseGroup = group === 'doencas' ? GROUP_TOPICS.find((g) => g.items.some((t) => t.id === topic)) : undefined;
+
+  const chip = (active: boolean) =>
+    `px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap border cursor-pointer ${
+      active ? 'border-sky-500/60 bg-sky-500/15 text-sky-200' : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
+    }`;
 
   const pill = (active: boolean) =>
     `flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
@@ -50,7 +70,7 @@ export default function DermatologiaMain({ initialTopic = CHAPTERS[0].id, onSele
             </div>
             <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">Dermatologia</h1>
             <p className="text-xs md:text-sm text-slate-400 mt-1 max-w-3xl leading-relaxed">
-              Manual completo em <strong>19 capítulos</strong>, dos fundamentos às aulas práticas, com as imagens clínicas principais e o glossário, mais os tópicos de <strong>Pênfigo</strong> e <strong>Psoríase</strong>.
+              Manual completo em <strong>19 capítulos</strong>, dos fundamentos às aulas práticas, com as imagens clínicas principais e o glossário, e <strong>{TOPICOS.length + DERM_DISEASES.length} tópicos por doença</strong> que reúnem a teoria e os casos das aulas práticas.
             </p>
           </div>
         </div>
@@ -63,12 +83,10 @@ export default function DermatologiaMain({ initialTopic = CHAPTERS[0].id, onSele
               <span>Parte {part} · {name.split(',')[0]}</span>
             </button>
           ))}
-          {DERM_DISEASES.map((d) => (
-            <button key={d.id} onClick={() => onSelectTopic(d.id)} className={pill(topic === d.id)}>
-              <d.icon size={14} />
-              <span>{d.name}</span>
-            </button>
-          ))}
+          <button onClick={() => onSelectTopic(GROUP_TOPICS[0].items[0].id)} className={pill(group === 'doencas')}>
+            <Stethoscope size={14} />
+            <span>Tópicos por doença</span>
+          </button>
           <button onClick={() => onSelectTopic(DERM_GLOSSARIO_ID)} className={pill(group === 'glossario')}>
             <BookOpen size={14} />
             <span>Glossário</span>
@@ -79,17 +97,40 @@ export default function DermatologiaMain({ initialTopic = CHAPTERS[0].id, onSele
         {groupChapters.length > 0 && (
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
             {groupChapters.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => onSelectTopic(c.id)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap border cursor-pointer ${
-                  c.id === topic ? 'border-sky-500/60 bg-sky-500/15 text-sky-200' : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
-                }`}
-              >
+              <button key={c.id} onClick={() => onSelectTopic(c.id)} className={chip(c.id === topic)}>
                 {c.num}. {c.short}
               </button>
             ))}
           </div>
+        )}
+
+        {/* Grupos de doenças e os tópicos do grupo atual */}
+        {diseaseGroup && (
+          <>
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              {GROUP_TOPICS.map((g) => {
+                const Icon = GROUP_ICON[g.group] ?? BookOpen;
+                return (
+                  <button key={g.group} onClick={() => onSelectTopic(g.items[0].id)} className={`flex items-center gap-1.5 ${chip(g === diseaseGroup)}`}>
+                    <Icon size={12} /> {g.group}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {diseaseGroup.items.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => onSelectTopic(t.id)}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border cursor-pointer ${
+                    t.id === topic ? 'border-sky-400 bg-sky-600 text-white' : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -97,6 +138,8 @@ export default function DermatologiaMain({ initialTopic = CHAPTERS[0].id, onSele
         <DermatologiaCapitulo chapterId={chapter.id} onSelectTopic={onSelectTopic} />
       ) : topic === DERM_GLOSSARIO_ID ? (
         <DermatologiaGlossario onSelectTopic={onSelectTopic} />
+      ) : topico ? (
+        <DermatologiaTopico topico={topico} onSelectTopic={onSelectTopic} />
       ) : topic === 'penfigo' ? (
         <PenfigoMain onSelectTopic={onSelectTopic} />
       ) : topic === 'psoriase' ? (
