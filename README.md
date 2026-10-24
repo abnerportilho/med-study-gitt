@@ -6,6 +6,12 @@ O **My Study** é uma aplicação web (SPA) de estudo e consulta rápida para me
 
 Este documento descreve **todas as especificações** do projeto (stack, arquitetura, módulos, conteúdo) e o **Entendimento de Pronto** (_Definition of Done_) que vale para qualquer novo módulo ou alteração.
 
+> **Vários chats trabalham neste projeto.** A memória compartilhada entre eles fica em dois arquivos:
+> - [`CLAUDE.md`](CLAUDE.md): regras que todo chat lê automaticamente ao começar;
+> - [`HISTORICO.md`](HISTORICO.md): resumo de cada atualização (o que mudou, por quê e o que ficou pendente).
+>
+> Toda mudança deve registrar uma entrada no `HISTORICO.md` no mesmo commit.
+
 ---
 
 ## Sumário
@@ -43,6 +49,8 @@ Principais capacidades:
 - **Pesquisa global** com busca aproximada (fuzzy) por doença, sinônimo ou palavra-chave.
 - **Fichas de fármacos** e **rastreador de interações multidrogas**, ambos imprimíveis.
 - **Fichas de orientação ao paciente** em formato A4 para impressão.
+- **Extrator de Exames**: lê PDFs de laudos laboratoriais e de imagem no navegador e monta uma linha pronta para o prontuário.
+- **Manual de Dermatologia** completo, um tópico por capítulo, com imagens e glossário.
 - **Prescrevo**: gerador de receitas standalone com base própria de esquemas.
 
 ---
@@ -60,6 +68,8 @@ Principais capacidades:
 | Animações | `motion` (`motion/react`) |
 | Gráficos | `recharts` |
 | Busca | `fuse.js` (busca fuzzy) |
+| Leitura de PDF | `pdfjs-dist` (Extrator de Exames, roda no navegador) |
+| Testes | `vitest` (motor do Extrator) |
 | Tipografia | Google Fonts: Syne, DM Sans, Space Mono |
 
 **Requisitos:** Node.js 20+ (testado com Node 22) e npm.
@@ -87,11 +97,10 @@ npm run dev
 | `npm run build` | Gera o build de produção em `dist/`. |
 | `npm run preview` | Serve o build localmente. |
 | `npm run lint` | Checagem de tipos com `tsc --noEmit`. |
+| `npm test` | Testes automatizados (`vitest run`). |
 | `npm run clean` | Remove `dist/`. |
 
-> **Atenção:** use `npm install` (e não `npm ci`) até que o `package-lock.json` seja atualizado — veja [Pendências](#12-estado-atual-e-pendências-conhecidas).
-
-O **Prescrevo** fica disponível em `/prescrevo.html` (servido a partir de `public/`).
+O **Prescrevo** fica disponível em `/prescrevo.html` (servido a partir de `med_study-main/public/`).
 
 ---
 
@@ -99,30 +108,35 @@ O **Prescrevo** fica disponível em `/prescrevo.html` (servido a partir de `publ
 
 ```
 med-study-gitt/
+├── CLAUDE.md               # Regras para todos os chats (lido automaticamente)
+├── HISTORICO.md            # Resumo de cada atualização — memória compartilhada
 ├── index.html              # Entrada do app → carrega /med_study-main/src/main.tsx
-├── vite.config.ts          # Vite + React + Tailwind, alias "@", saída em dist/
+├── vite.config.ts          # Vite + React + Tailwind, alias "@", publicDir = med_study-main/public
 ├── tsconfig.json
-├── package.json            # Projeto que efetivamente roda (inclui fuse.js)
+├── package.json            # Projeto que efetivamente roda (dependências na raiz)
 ├── metadata.json           # Metadados do AI Studio (nome/descrição)
 ├── .env.example
-├── public/
-│   ├── prescrevo.html      # Gerador de receitas (standalone, HTML+JS puro)
-│   ├── prescrevo-app.js
-│   └── prescrevo-data.js   # Base de 344 esquemas de prescrição
+├── tools/
+│   ├── dermatologia/       # Conversor do manual de dermatologia → JSON por capítulo
+│   └── minerador-laudos/   # Coleta/anonimização de laudos para testes do Extrator
 └── med_study-main/         # Código-fonte da aplicação
     ├── src/
-    │   ├── main.tsx        # Bootstrap React
+    │   ├── main.tsx        # Bootstrap React + ErrorBoundary + recarga após deploy
     │   ├── App.tsx         # Shell: sidebars, catálogo SPECIALTIES, roteamento por estado
     │   ├── index.css       # Tailwind + tokens de tema
     │   ├── *Main.tsx       # Módulos completos (um por tema)
     │   ├── <Doença><Aba>.tsx  # Abas dos módulos padrão (ex.: ICPatho, ICTreatment)
     │   ├── components/<tema>/ # Subcomponentes de módulos grandes
+    │   ├── dermatologia/   # manifest.json + capítulos em JSON (carregados sob demanda)
+    │   ├── extrator/       # Motor do Extrator de Exames (parser, formatação, imagem, testes)
     │   └── data/medicamentosData.ts
-    ├── public/             # Cópia do Prescrevo
-    └── package.json, vite.config.ts, index.html  # Configuração própria (legado)
+    ├── public/             # Pasta pública única do build
+    │   ├── prescrevo.html, prescrevo-app.js, prescrevo-data.js  # Gerador de receitas (344 esquemas)
+    │   └── derm/           # 237 imagens do manual de dermatologia
+    └── package.json, vite.config.ts, index.html  # Configuração própria (legado, não usada)
 ```
 
-O app é servido **a partir da raiz** do repositório: o `index.html` raiz aponta para `med_study-main/src/main.tsx`. Os arquivos de configuração dentro de `med_study-main/` são uma cópia anterior e não são usados pelo build raiz.
+O app é servido **a partir da raiz** do repositório: o `index.html` raiz aponta para `med_study-main/src/main.tsx` e o `vite.config.ts` raiz usa `med_study-main/public` como pasta pública. Os arquivos de configuração dentro de `med_study-main/` são uma cópia anterior e não são usados pelo build raiz.
 
 ---
 
@@ -130,7 +144,7 @@ O app é servido **a partir da raiz** do repositório: o `index.html` raiz apont
 
 ### 5.1 Layout
 
-1. **Barra primária (esquerda, fixa, 80 px):** logo/Início (Hub), Pesquisa Global, Fichas de Orientação (A4), Fichas de Fármacos, Rastreador de Interações e, abaixo, um ícone por especialidade.
+1. **Barra primária (esquerda, fixa, 80 px):** logo/Início (Hub), Pesquisa Global, Fichas de Orientação (A4), Fichas de Fármacos, Rastreador de Interações, Extrator de Exames e, abaixo, um ícone por especialidade.
 2. **Barra secundária (recolhível):** lista de doenças/temas da especialidade selecionada (ordenada alfabeticamente em pt-BR).
 3. **Área principal:** cabeçalho do tema, abas temáticas e conteúdo.
 
@@ -140,14 +154,14 @@ Não há React Router. A navegação é controlada por estado em `App.tsx`:
 
 | Estado | Função |
 |---|---|
-| `selectedSpecialty` | Especialidade ou ferramenta ativa (`hub`, `search`, `orientacoes`, `medicamentos`, `rastreador`, `pneumologia`, …). |
+| `selectedSpecialty` | Especialidade ou ferramenta ativa (`hub`, `search`, `orientacoes`, `medicamentos`, `rastreador`, `extrator`, `pneumologia`, …). |
 | `selectedDisease` | Doença/tema ativo (ids do catálogo `SPECIALTIES`). |
 | `activeTab` | Aba ativa dentro de um módulo padrão (`<id>-patho`, `<id>-clinical`, …). |
 | `isSidebarCollapsed` | Recolhe/expande a barra secundária. |
 
 A renderização segue esta ordem de prioridade:
 
-1. Ferramentas transversais (`hub`, `orientacoes`, `rastreador`, `medicamentos`, `search`).
+1. Ferramentas transversais (`hub`, `orientacoes`, `rastreador`, `extrator`, `medicamentos`, `search`).
 2. Especialidades com módulo próprio (`cirurgia`, `preventiva`, `dermatologia`), que recebem `initialTopic`.
 3. Doenças com componente `*Main` dedicado (ex.: `prenatal`, `dislipidemias`, `ca-mama`…).
 4. Doenças em `DISEASE_CONFIGS` → **layout padrão de abas**.
@@ -172,11 +186,12 @@ Abas extras: DRC (Guia do Paciente A4, Epidemiologia, Calculadora CKD-EPI, Diál
 | Ferramenta | Arquivo | Especificação |
 |---|---|---|
 | **Início / Hub** | `HubPortalMain.tsx` | Portal de entrada com resumos e atalhos. |
-| **Fichas de Orientação (A4)** | `HubPortalMain.tsx` | 10 fichas para pacientes, com filtros por categoria. **4 prontas para impressão** (Guia de Dieta na DRC, Mapa Glicêmico, Segurança do PTU, Segurança da Hidralazina/DILE) e 6 "em breve" (MRPA, técnica inalatória, pé diabético, dieta DASH, TRO pediátrica, fotoproteção). |
-| **Pesquisa Global** | `SearchMain.tsx` | Busca fuzzy (Fuse.js) sobre 62 entradas (nome, especialidade e palavras-chave/sinônimos); o resultado abre o módulo correspondente. |
+| **Fichas de Orientação (A4)** | `HubPortalMain.tsx` | 5 fichas para pacientes, todas prontas para impressão: Guia de Dieta na DRC (`CKDPatientGuide`), Mapa & Diário de Glicemia (`MapaGlicemicoMain`), Diário de MRPA (`MrpaDiarioMain`), Plano de Ação e Técnica Inalatória na Asma (`AsmaPlanoAcaoMain`) e Cuidados com o Pé Diabético (`PeDiabeticoMain`). |
+| **Pesquisa Global** | `SearchMain.tsx` | Busca fuzzy (Fuse.js) sobre o índice `SEARCH_DATA` (nome, especialidade e palavras-chave/sinônimos) mais os títulos de seção dos capítulos de Dermatologia; o resultado abre o módulo correspondente. |
 | **Fichas de Fármacos** | `MedicamentosMain.tsx` + `data/medicamentosData.ts` | 26 fármacos (cardiovascular, infecciosas, endocrinologia, SNC/psiquiatria, analgesia/inflamação) com classe, nomes comerciais, indicações, ajustes renal/hepático, toxicidade/antídoto e alertas. Busca e filtros (sistema, "com antídoto", "ajuste renal"). Imprimível. |
 | **Rastreador de Interações** | `RastreadorInteracoesMain.tsx` | Verificação de interações entre múltiplos fármacos. Imprimível. |
-| **Prescrevo** | `public/prescrevo.html` | Gerador de receitas standalone: busca → esquema → receita pronta. Base com 344 esquemas (272 Clínica, 28 Gineco, 24 Pediatria, 20 Injetáveis), abas *Receita*, *Minha base* (esquemas próprios) e *Cabeçalho* (dados do médico). Tema claro/escuro. Salva no `localStorage`. |
+| **Extrator de Exames** | `ExtratorExamesMain.tsx` + `src/extrator/` | Lê PDFs de laudos **no navegador** (pdf.js; nada é enviado). Laboratório → uma linha com abreviações, unidades e data de coleta, ex.: `(22/05/26) Hb 15,1 g/dL \| Ht 45,0% \| …`. Imagem/métodos gráficos (TC, RX, USG, mamografia, densitometria, RM, eco, polissonografia) → `<exame> (<data>): <conclusão literal> <escores>` (BI-RADS, TI-RADS, FEVE, IAH, T-score…). Cada item aparece ao lado da linha original para o médico conferir, desmarcar ou editar antes de copiar. Coberto por testes vitest. |
+| **Prescrevo** | `med_study-main/public/prescrevo.html` | Gerador de receitas standalone: busca → esquema → receita pronta. Base com 344 esquemas (272 Clínica, 28 Gineco, 24 Pediatria, 20 Injetáveis), abas *Receita*, *Minha base* (esquemas próprios) e *Cabeçalho* (dados do médico). Tema claro/escuro. Salva no `localStorage`. |
 
 ---
 
@@ -203,6 +218,7 @@ Legenda: ✅ módulo disponível · 🚧 em desenvolvimento (tela placeholder)
 | Febre Reumática | ✅ | Abas padrão (`Rheumatic*`) |
 | Hipertensão Arterial Sistêmica | ✅ | Abas padrão (`HAS*`) |
 | Insuficiência Cardíaca | ✅ | Abas padrão (`IC*`) + IC Descompensada |
+| Diário de MRPA (A4 editável) | ✅ | `MrpaDiarioMain.tsx` — dias (até 31) e leituras por período livres, médias sem o dia de adaptação, alerta ≥ 180/110, interpretação vs. PA de consultório |
 | Síndrome Coronariana Crônica | ✅ | Abas padrão (`SCC*`) |
 
 ### Nefrologia
@@ -262,7 +278,14 @@ Legenda: ✅ módulo disponível · 🚧 em desenvolvimento (tela placeholder)
 | Câncer de Cólon, Próstata, Pulmão; Neoplasia de Pele | 🚧 |
 
 ### Dermatologia (`DermatologiaMain.tsx`)
-🚧 Espaço "Construir Módulo Junto", com backlog de tópicos: Hidralazina/DILE e Farmacodermias (*pronto para construir*), Lesões Elementares e Urgências Cutâneas Graves — SJS/NET/DRESS (*ideia*).
+| Tema | Status | Implementação |
+|---|---|---|
+| Manual de Dermatologia — 19 capítulos (um item de menu por capítulo, numerado) | ✅ | `DermatologiaCapitulo.tsx` + `src/dermatologia/capitulos/*.json` (sob demanda) + imagens em `public/derm/` — tabelas, destaques, fluxos, zoom de figuras, termos do glossário ao toque, capítulo anterior/próximo |
+| Glossário de Dermatologia | ✅ | `src/dermatologia/` |
+| Pênfigo | ✅ | `PenfigoMain.tsx` (formato de abas; EADV/JAAD) |
+| Psoríase | ✅ | `PsoriaseMain.tsx` (formato de abas; consenso brasileiro) |
+
+Quizzes e simulados do manual original ficaram de fora de propósito. Conversor em `tools/dermatologia/`.
 
 ### Neurologia
 🚧 Em breve.
@@ -283,7 +306,9 @@ Legenda: ✅ módulo disponível · 🚧 em desenvolvimento (tela placeholder)
 
 ## 9. Dados e persistência
 
-- O conteúdo clínico é **estático**, escrito diretamente nos componentes `.tsx` ou em arquivos de dados (`data/medicamentosData.ts`, `ckdGuideData.ts`).
+- O conteúdo clínico é **estático**, escrito diretamente nos componentes `.tsx` ou em arquivos de dados (`data/medicamentosData.ts`, `ckdGuideData.ts`, `dermatologia/capitulos/*.json`).
+- Os capítulos de Dermatologia e partes pesadas são carregados **sob demanda** (chunks separados). Se uma aba aberta antes de um deploy não encontrar um chunk antigo, o app recarrega uma vez; erros de renderização mostram uma tela de erro (`ErrorBoundary`) em vez de deixar o app em branco.
+- O **Extrator de Exames** processa os PDFs apenas no navegador; nada é enviado a servidores.
 - O app React **não persiste estado** (recarregar a página volta à tela inicial).
 - O **Prescrevo** salva a base pessoal e o cabeçalho no `localStorage` (chave `rx:v2`) — os dados ficam apenas no navegador do usuário.
 - Nenhum dado de paciente é enviado a servidores.
@@ -315,6 +340,7 @@ Um módulo, tema ou alteração só é considerado **PRONTO** quando **todos** o
 
 ### 10.4 Qualidade técnica
 - [ ] `npm run lint` (`tsc --noEmit`) passa sem erros.
+- [ ] `npm test` (vitest) passa — e lógica nova de cálculo/extração ganha testes.
 - [ ] `npm run build` conclui sem erros.
 - [ ] Sem erros ou warnings novos no console do navegador ao abrir e navegar pelo módulo.
 - [ ] Código segue os padrões do projeto: TSX + Tailwind com tokens do tema, `cn()`, ícones `lucide-react`; módulos grandes divididos em `components/<tema>/`.
@@ -327,9 +353,11 @@ Um módulo, tema ou alteração só é considerado **PRONTO** quando **todos** o
 - [ ] Tabelas, fluxogramas e gráficos têm títulos e legendas claros.
 
 ### 10.6 Entrega
+- [ ] Branch atualizada com a `main` antes do push (vários chats trabalham em paralelo).
 - [ ] Revisado por outra pessoa (conteúdo médico e código).
 - [ ] Commit com mensagem descritiva e push na branch de trabalho; PR aberto com descrição do que foi incluído.
-- [ ] Este README atualizado (catálogo da seção 7 e status ✅/🚧).
+- [ ] **Entrada adicionada no topo do [`HISTORICO.md`](HISTORICO.md)** no mesmo commit (o que mudou, decisões, pendências).
+- [ ] Este README atualizado (catálogo da seção 7, status ✅/🚧 e pendências da seção 12).
 
 ---
 
@@ -343,8 +371,8 @@ Um módulo, tema ou alteração só é considerado **PRONTO** quando **todos** o
    - `*Main`: adicione um ramo `selectedDisease === 'meu-tema' ? <MeuTemaMain /> : …`.
    - Abas padrão: adicione a entrada em `DISEASE_CONFIGS` e os ramos correspondentes em cada aba.
 4. **Indexe na busca**: adicione o tema em `SEARCH_DATA` (`SearchMain.tsx`).
-5. **Valide**: `npm run lint && npm run build` e navegue pelo módulo no `npm run dev`.
-6. **Confira o [Entendimento de Pronto](#10-entendimento-de-pronto-definition-of-done)** e atualize este README.
+5. **Valide**: `npm run lint && npm test && npm run build` e navegue pelo módulo no `npm run dev`.
+6. **Confira o [Entendimento de Pronto](#10-entendimento-de-pronto-definition-of-done)**, registre a mudança no `HISTORICO.md` e atualize este README.
 
 ---
 
@@ -352,17 +380,15 @@ Um módulo, tema ou alteração só é considerado **PRONTO** quando **todos** o
 
 | # | Pendência | Impacto |
 |---|---|---|
-| 1 | `package-lock.json` desatualizado (falta `fuse.js`): `npm ci` falha; use `npm install` e faça commit do lockfile atualizado. | Instalação/CI |
-| 2 | Bundle JavaScript único com ~4,4 MB (Vite alerta chunks > 500 kB). Avaliar `React.lazy`/`import()` por módulo. | Desempenho no carregamento |
-| 3 | Temas placeholder: Anticoncepção, Saúde Sexual, Vaginose, Câncer de Cólon/Próstata/Pulmão, Neoplasia de Pele, Dermatologia e Neurologia. | Conteúdo |
-| 4 | 6 das 10 fichas de orientação A4 ainda "em breve". | Conteúdo |
-| 5 | Configuração duplicada em `med_study-main/` (package.json, vite.config.ts, index.html, public/) que não é usada pelo build raiz. | Manutenção |
-| 6 | Rodapé ainda exibe "PneumoDash · GINA 2024" (herança da primeira versão focada em asma). | Identidade visual |
-| 7 | Dependências e variáveis do template AI Studio não usadas (`@google/genai`, `express`, `dotenv`, `GEMINI_API_KEY`). | Limpeza |
-| 8 | Sem testes automatizados; a validação hoje é `tsc` + build + revisão manual. | Qualidade |
-| 9 | Navegação sem URL (sem rotas): não é possível compartilhar link direto para um tema. | UX |
+| 1 | Bundle principal ainda com ~4,6 MB (Vite alerta chunks > 500 kB). Dermatologia e o worker do pdf.js já são separados; avaliar `React.lazy`/`import()` para os demais módulos. | Desempenho no carregamento |
+| 2 | Temas placeholder: Anticoncepção, Saúde Sexual, Vaginose, Câncer de Cólon/Próstata/Pulmão, Neoplasia de Pele e Neurologia. | Conteúdo |
+| 3 | Configuração duplicada em `med_study-main/` (package.json, vite.config.ts, index.html) que não é usada pelo build raiz. | Manutenção |
+| 4 | Rodapé ainda exibe "PneumoDash · GINA 2024" (herança da primeira versão focada em asma). | Identidade visual |
+| 5 | Dependências e variáveis do template AI Studio não usadas (`@google/genai`, `express`, `dotenv`, `GEMINI_API_KEY`). | Limpeza |
+| 6 | Testes automatizados só cobrem o Extrator; calculadoras (PREVENT, CKD-EPI, MRPA etc.) ainda sem testes. | Qualidade |
+| 7 | Navegação sem URL (sem rotas): não é possível compartilhar link direto para um tema. | UX |
 
-**Verificação no estado atual:** `npm run lint` ✅ · `npm run build` ✅ (com aviso de tamanho de chunk).
+**Verificação no estado atual (2026-10-24):** `npm run lint` ✅ · `npm test` ✅ (52 testes) · `npm run build` ✅ (com aviso de tamanho de chunk) · `npm ci` ✅.
 
 ---
 
