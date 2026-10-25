@@ -49,7 +49,7 @@ export interface ChapterMeta {
 
 export const CHAPTERS = MANIFEST as ChapterMeta[];
 
-const LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
+export const LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
   'derm-cap-01': () => import('./dermatologia/capitulos/derm-cap-01.json'),
   'derm-cap-02': () => import('./dermatologia/capitulos/derm-cap-02.json'),
   'derm-cap-03': () => import('./dermatologia/capitulos/derm-cap-03.json'),
@@ -203,8 +203,18 @@ export function BlockView({ b, onZoom }: { b: Block; onZoom: (key: string, cap: 
   }
 }
 
+export function ImageZoom({ zoom, onClose }: { zoom: { key: string; cap: string }; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[70] bg-black/85 flex flex-col items-center justify-center p-4" onClick={onClose}>
+      <button className="absolute top-4 right-4 p-2 text-white/80 hover:text-white cursor-pointer" aria-label="Fechar"><X size={22} /></button>
+      <img src={imgSrc(zoom.key)} alt="" className="max-w-full max-h-[80vh] object-contain rounded-lg" />
+      {zoom.cap && <p className="mt-3 max-w-3xl text-center text-sm text-slate-200" dangerouslySetInnerHTML={html(zoom.cap)} />}
+    </div>
+  );
+}
+
 // Falha ao baixar o arquivo do capítulo (sem internet ou aba aberta antes de uma atualização).
-function LoadError({ what }: { what: string }) {
+export function LoadError({ what }: { what: string }) {
   return (
     <div className="card p-6 space-y-3">
       <p className="text-sm text-rose-300">Não foi possível carregar {what}. Verifique a internet ou recarregue a página.</p>
@@ -351,13 +361,7 @@ export function DermatologiaCapitulo({ chapterId, onSelectTopic }: { chapterId: 
         )}
       </div>
 
-      {zoom && (
-        <div className="fixed inset-0 z-[70] bg-black/85 flex flex-col items-center justify-center p-4" onClick={() => setZoom(null)}>
-          <button className="absolute top-4 right-4 p-2 text-white/80 hover:text-white cursor-pointer" aria-label="Fechar"><X size={22} /></button>
-          <img src={imgSrc(zoom.key)} alt="" className="max-w-full max-h-[80vh] object-contain rounded-lg" />
-          {zoom.cap && <p className="mt-3 max-w-3xl text-center text-sm text-slate-200" dangerouslySetInnerHTML={html(zoom.cap)} />}
-        </div>
-      )}
+      {zoom && <ImageZoom zoom={zoom} onClose={() => setZoom(null)} />}
       {popup}
     </div>
   );

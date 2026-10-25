@@ -16,6 +16,7 @@ import CirurgiaMain from './CirurgiaMain';
 import PreventivaMain from './PreventivaMain';
 import DermatologiaMain from './DermatologiaMain';
 import DERM_MANIFEST from './dermatologia/manifest.json';
+import { TOPICOS as DERM_TOPICOS } from './dermatologia/topicos';
 import CKDEPICalculator from './CKDEPICalculator';
 import CKDPatientGuide from './CKDPatientGuide';
 import SCCPatho from './SCCPatho';
@@ -344,6 +345,8 @@ const SPECIALTIES = [
     diseases: [
       // Um item por capítulo do Manual de Dermatologia; o número mantém a ordem no menu alfabético.
       ...DERM_MANIFEST.map(c => ({ id: c.id, name: `${String(c.num).padStart(2, '0')}. ${c.short}` })),
+      // Tópicos por doença, montados com as seções do manual.
+      ...DERM_TOPICOS.map(t => ({ id: t.id, name: t.name })),
       { id: 'derm-glossario', name: 'Glossário de Dermatologia' },
       { id: 'penfigo', name: 'Pênfigo' },
       { id: 'psoriase', name: 'Psoríase' }
