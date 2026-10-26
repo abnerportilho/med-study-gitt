@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Imagens da dermatologia: servidas pelo jsDelivr, nunca no main (ver tools/dermatologia/README.md)
+public/derm/
