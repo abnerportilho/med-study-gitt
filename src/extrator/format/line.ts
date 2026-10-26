@@ -1,6 +1,5 @@
 import type { ExamItem, Measurement, ParsedReport } from '../parser/types';
 import { RULES, contextGroup, fallbackRule, findRuleIndex, isIgnored, perVolume, type PrintRule } from './rules';
-import { panelIndex } from './panels';
 
 export interface LineEntry {
   /** Identificador estável dentro do laudo (para marcar/desmarcar na tela). */
@@ -18,21 +17,15 @@ export interface LineEntry {
   duplicate: boolean;
   /** Entra na linha por padrão. */
   selected: boolean;
-  /** Painel clínico (índice em PANELS): hemograma, glicemia, função renal... */
-  panel: number;
   item: ExamItem;
 }
 
 export interface LineOptions {
   units: boolean;
   date: boolean;
-  /** Exames do mesmo painel juntos (hemograma, glicemia, função renal...), na ordem dos painéis. */
-  grouped: boolean;
-  /** Lista: uma linha por painel (ou por exame, sem agrupar). Linha: tudo numa linha só. */
-  list: boolean;
 }
 
-export const DEFAULT_OPTIONS: LineOptions = { units: true, date: true, grouped: true, list: false };
+export const DEFAULT_OPTIONS: LineOptions = { units: true, date: true };
 
 /** Unidade canônica (minúscula) → como aparece no prontuário. */
 const UNIT_DISPLAY: Record<string, string> = {
@@ -109,14 +102,10 @@ function differential(values: Measurement[]): { main: Measurement; percent?: str
  */
 export function toEntries(report: ParsedReport): LineEntry[] {
   const seen = new Set<string>();
-  // "Rótulo: Inferior a X" só vale quando o exame não tem outro valor no laudo: com o
-  // mesmo formato vêm as faixas de referência ("Colesterol total: Inferior a 190 mg/dL").
-  const plainRules = new Set(report.items.filter((it) => !it.comparatorRow && !isIgnored(it)).map((it) => findRuleIndex(it)));
   return report.items
     .flatMap((item, docIndex) => {
       if (isIgnored(item)) return [];
       const index = findRuleIndex(item);
-      if (item.comparatorRow && (index < 0 || plainRules.has(index))) return [];
       const inContext = !!contextGroup(item);
       const known = index >= 0 || inContext;
       const rule: PrintRule = index >= 0 ? RULES[index] : fallbackRule(item);
@@ -168,7 +157,6 @@ function toEntry(
     // Itens desconhecidos sem unidade costumam ser lixo (números de texto corrido): ficam
     // desmarcados. "Resultado:" logo abaixo de um título é confiável mesmo sem unidade.
     selected: !duplicate && !isOrphanResult(item) && (known || hasData || isTitledResult(item)),
-    panel: panelIndex(rule.abbr, known, group, item),
     item,
   };
 }
@@ -199,37 +187,23 @@ export function shortDate(date: string): string {
 }
 
 /**
- * O texto para o prontuário: "(14/05/26) Hb 13,2 g/dL | Ht 39% | ... | Urina: pH 6,0, Nitrito Negativo".
- * Itens de um grupo (gasometria, urina) saem juntos na posição do primeiro. Agrupado, os
- * exames seguem a ordem dos painéis (PANELS); em lista, cada painel vai numa linha.
+ * A linha para o prontuário: "(14/05/26) Hb 13,2 g/dL | Ht 39% | ... | Urina: pH 6,0, Nitrito Negativo".
+ * Itens de um grupo (gasometria, urina) saem juntos na posição do primeiro.
  */
 export function buildLine(entries: LineEntry[], collectedAt: string | undefined, opts: LineOptions = DEFAULT_OPTIONS): string {
-  // Agrupado: ordem dos painéis; dentro do painel, a ordem de sempre (ordem estável).
   const chosen = entries.filter((e) => e.selected);
-  if (opts.grouped) chosen.sort((a, b) => a.panel - b.panel);
-  // Cada parte é um exame, ou um grupo de contexto inteiro ("Urina: pH 6,0, Nitrito Negativo").
-  const parts: { panel: number; text: string }[] = [];
+  const parts: string[] = [];
   const emitted = new Set<string>();
   for (const e of chosen) {
     if (!e.group) {
-      parts.push({ panel: e.panel, text: `${e.abbr} ${formatValue(e, opts)}` });
+      parts.push(`${e.abbr} ${formatValue(e, opts)}`);
     } else if (!emitted.has(e.group)) {
       emitted.add(e.group);
       const inGroup = chosen.filter((x) => x.group === e.group).map((x) => `${x.abbr} ${formatValue(x, opts)}`);
-      parts.push({ panel: e.panel, text: `${e.group}: ${inGroup.join(', ')}` });
+      parts.push(`${e.group}: ${inGroup.join(', ')}`);
     }
   }
-  if (!parts.length) return '';
-  const date = opts.date && collectedAt ? `(${shortDate(collectedAt)})` : '';
-  if (!opts.list) {
-    const body = parts.map((p) => p.text).join(' | ');
-    return date ? `${date} ${body}` : body;
-  }
-  // Lista: uma linha por painel quando agrupado, senão uma linha por exame.
-  const lines: string[] = [];
-  parts.forEach((p, i) => {
-    if (opts.grouped && i > 0 && parts[i - 1].panel === p.panel) lines[lines.length - 1] += ` | ${p.text}`;
-    else lines.push(p.text);
-  });
-  return [date, ...lines].filter(Boolean).join('\n');
+  const body = parts.join(' | ');
+  if (!body) return '';
+  return opts.date && collectedAt ? `(${shortDate(collectedAt)}) ${body}` : body;
 }

@@ -15,8 +15,6 @@ import { twMerge } from 'tailwind-merge';
 import CirurgiaMain from './CirurgiaMain';
 import PreventivaMain from './PreventivaMain';
 import DermatologiaMain from './DermatologiaMain';
-import DERM_MANIFEST from './dermatologia/manifest.json';
-import { TOPICOS as DERM_TOPICOS } from './dermatologia/topicos';
 import CKDEPICalculator from './CKDEPICalculator';
 import CKDPatientGuide from './CKDPatientGuide';
 import SCCPatho from './SCCPatho';
@@ -343,13 +341,18 @@ const SPECIALTIES = [
     name: 'Dermatologia',
     icon: Sun,
     diseases: [
-      // Um item por capítulo do Manual de Dermatologia; o número mantém a ordem no menu alfabético.
-      ...DERM_MANIFEST.map(c => ({ id: c.id, name: `${String(c.num).padStart(2, '0')}. ${c.short}` })),
-      // Tópicos por doença, montados com as seções do manual.
-      ...DERM_TOPICOS.map(t => ({ id: t.id, name: t.name })),
-      { id: 'derm-glossario', name: 'Glossário de Dermatologia' },
-      { id: 'penfigo', name: 'Pênfigo' },
-      { id: 'psoriase', name: 'Psoríase' }
+      { id: 'eritematodescamativas', name: 'Síndromes Eritematodescamativas (Psoríase & Líquen)' },
+      { id: 'eczemas', name: 'Eczemas & Dermatite Atópica' },
+      { id: 'bolhosas', name: 'Doenças Bolhosas (Pênfigos & Penfigoide)' },
+      { id: 'infecciosas', name: 'Infecciosas & Zoonoses (Erisipela, Celulite, Tineas)' },
+      { id: 'neoplasias', name: 'Neoplasias Cutâneas (Melanoma, CBC & CEC)' },
+      { id: 'acne_anexos', name: 'Anexos, Acne & Alopecias' },
+      { id: 'farmacodermias', name: 'Farmacodermias & Urgências (SSJ/NET & DRESS)' },
+      { id: 'calculadoras', name: 'Calculadoras Clínicas (PASI, SCORAD, BSA, FTU)' },
+      { id: 'atlas_semiologia', name: 'Atlas de Lesões & Sinais Semiológicos' },
+      { id: 'guia_prescricao', name: 'Guia de Prescrição (Corticoides I a VII)' },
+      { id: 'psoriase', name: 'Psoríase' },
+      { id: 'penfigo', name: 'Pênfigo' }
     ]
   },
   {

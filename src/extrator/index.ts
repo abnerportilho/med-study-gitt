@@ -7,7 +7,6 @@ export type { PageLines } from './pdf/extract';
 export type { ParsedReport, ExamItem } from './parser';
 export { buildLine, formatValue, shortDate, DEFAULT_OPTIONS, type LineEntry, type LineOptions } from './format/line';
 export { buildImagingLine, type ImagingReport } from './imagem';
-export { PANELS } from './format/panels';
 
 export interface ExtractedReport {
   report: ParsedReport;

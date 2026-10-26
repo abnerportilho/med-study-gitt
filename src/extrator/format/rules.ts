@@ -134,20 +134,17 @@ export const RULES: Rule[] = [
 
   // Glicose
   { abbr: 'Glicemia', match: name('^GLICOSE|^GLICEMIA( DE JEJUM)?$') },
-  { abbr: 'HbA1c', suffix: '%', match: (n) => /HEMOGLOBINA GLICADA|HB ?A1C|GLICOHEMOGLOBINA/.test(n) && !/LABIL/.test(n) },
-  { abbr: 'Glicemia média est.', match: name('GLICEMIA (MEDIA )?ESTIMADA|GLICOSE MEDIA ESTIMADA') },
+  { abbr: 'HbA1c', suffix: '%', match: name('HEMOGLOBINA GLICADA|HBA1C|GLICOHEMOGLOBINA') },
+  { abbr: 'Glicemia média est.', match: name('GLICEMIA MEDIA ESTIMADA') },
   { abbr: 'Insulina', match: name('^INSULINA') },
 
   // Lipídios
   { abbr: 'CT', match: name('^COLESTEROL TOTAL') },
   { abbr: 'TG', match: name('^TRIGLIC') },
-  { abbr: 'HDL', match: name('^COLESTEROL,?( -)? (FRACAO )?HDL|^HDL') },
-  { abbr: 'LDL', match: name('^COLESTEROL,?( -)? (FRACAO )?LDL|^LDL') },
+  { abbr: 'HDL', match: name('^COLESTEROL,? (FRACAO )?HDL|^HDL') },
+  { abbr: 'LDL', match: name('^COLESTEROL,? (FRACAO )?LDL|^LDL') },
   { abbr: 'não-HDL', match: name('NAO[ -]?HDL') },
   { abbr: 'VLDL', match: name('VLDL') },
-
-  // Urina (cultura; o EAS sai no grupo de contexto "Urina")
-  { abbr: 'Urocultura', match: name('^UROCULTURA') },
 
   // Função renal / eletrólitos
   { abbr: 'Ur', match: name('^UREIA') },
@@ -237,13 +234,8 @@ export const RULES: Rule[] = [
 /** Linhas que passam como resultado mas são controles, padrões ou índices que ninguém cola. */
 const IGNORED = /^PROTROMBINA \(PADRAO\)|^PLASMA CONTROLE|^SENSIBILIDADE INTERNACIONAL|RELACAO PACIENTE\/PADRAO|^TEMPO DO CONTROLE|^NORMAL DO DIA|^ISI\b|^POOL\b/i;
 
-/** Frações do HPLC impressas junto da hemoglobina glicada (Hb A1a, A1b, F, lábil, A0). */
-const A1C_FRACTIONS = /^HB ?(A1A|A1B|A1C LABIL|F|A|A0)$/;
-
 export function isIgnored(item: ExamItem): boolean {
-  const n = norm(itemName(item));
-  if (A1C_FRACTIONS.test(n) && /GLICADA|A1C/.test(norm(item.exam))) return true;
-  return IGNORED.test(n);
+  return IGNORED.test(norm(itemName(item)));
 }
 
 /** Grupo de contexto do item (Urina, Eletroforese...), se o exame for um desses. */

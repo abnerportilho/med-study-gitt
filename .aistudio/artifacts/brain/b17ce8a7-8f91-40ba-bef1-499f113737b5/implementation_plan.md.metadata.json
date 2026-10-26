@@ -1,0 +1,6 @@
+{
+  "summary":  "Plano de implementação para reestruturação completa do módulo de Dermatologia, alinhando-o ao padrão interativo dos outros módulos da plataforma (Cirurgia, Ginecologia, Cardiologia). O novo módulo organiza o conteúdo por grandes síndromes dermatológicas, incorpora atlas de lesões elementares, calculadoras clínicas (PASI, BSA, SCORAD, dose acumulada de isotretinoína), fluxogramas de conduta da SBD e guia posológico detalhado de corticoides tópicos e imunobiológicos.",
+  "updatedAt":  "2026-10-26T12:15:15.485698834Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}
