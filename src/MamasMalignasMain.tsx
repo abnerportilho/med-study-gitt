@@ -7,7 +7,7 @@ import {
 
 import MalignasCarcinogeneseRisco from './components/mamas_malignas/MalignasCarcinogeneseRisco';
 import MalignasSuspeitaSinaisAlerta from './components/mamas_malignas/MalignasSuspeitaSinaisAlerta';
-import MalignasPropedêuticaImagemBIRADS from './components/mamas_malignas/MalignasPropedêuticaImagemBIRADS';
+import MalignasPropedeuticaImagemBIRADS from './components/mamas_malignas/MalignasPropedeuticaImagemBIRADS';
 import MalignasPatologiaBiomarcadores from './components/mamas_malignas/MalignasPatologiaBiomarcadores';
 import MalignasEstadiamentoTNM from './components/mamas_malignas/MalignasEstadiamentoTNM';
 import MalignasTratamentoSeguimento from './components/mamas_malignas/MalignasTratamentoSeguimento';
@@ -94,7 +94,7 @@ export default function MamasMalignasMain() {
         >
           {activeTab === 'carcinogenese' && <MalignasCarcinogeneseRisco />}
           {activeTab === 'suspeita' && <MalignasSuspeitaSinaisAlerta />}
-          {activeTab === 'imagem' && <MalignasPropedêuticaImagemBIRADS />}
+          {activeTab === 'imagem' && <MalignasPropedeuticaImagemBIRADS />}
           {activeTab === 'patologia' && <MalignasPatologiaBiomarcadores />}
           {activeTab === 'estadiamento' && <MalignasEstadiamentoTNM />}
           {activeTab === 'tratamento' && <MalignasTratamentoSeguimento />}

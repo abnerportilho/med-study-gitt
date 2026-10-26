@@ -71,8 +71,11 @@ export const LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
   'derm-cap-19': () => import('./dermatologia/capitulos/derm-cap-19.json'),
 };
 
-// Imagens em public/derm (relativo à página: funciona no domínio e no artefato).
-const imgSrc = (key: string) => `derm/${key}.webp`;
+// As imagens ficam fora do main (o import do Google AI Studio falha com arquivos binários) e são
+// servidas pelo jsDelivr a partir de um commit fixo que ainda as contém. Ver tools/dermatologia/README.md.
+const DERM_IMG_BASE =
+  'https://cdn.jsdelivr.net/gh/abnerportilho/med-study-gitt@2eddaa3f20c71416b170ce5c7a74ac9de0f88eff/med_study-main/public/derm';
+const imgSrc = (key: string) => `${DERM_IMG_BASE}/${key}.webp`;
 
 const html = (h: Inline) => ({ __html: h });
 

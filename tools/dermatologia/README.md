@@ -8,6 +8,10 @@ tópico de Dermatologia:
 - `src/dermatologia/capitulos/glossario.json`: termos, definições e capítulo de origem.
 - `src/dermatologia/manifest.json`: lista de capítulos (menu e busca).
 - `public/derm/`: as imagens principais (1 por seção, ou 2 em seções com 4 ou mais imagens).
+  Essas imagens **não ficam no `main`**: o import do Google AI Studio falha com arquivos binários.
+  O app as busca pelo jsDelivr no commit `2eddaa3`, que ainda as contém (`DERM_IMG_BASE` em
+  `src/DermatologiaCapitulo.tsx`). Para trocar as imagens: gere-as, faça commit delas em um branch
+  separado (nunca no `main`), envie para o GitHub e troque o hash e o caminho em `DERM_IMG_BASE`.
 
 Para regenerar, na raiz do repositório:
 

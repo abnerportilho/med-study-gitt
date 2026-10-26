@@ -8,8 +8,9 @@ import { extractReport, buildLine, type LineEntry } from './index';
 const FIXTURES = join(__dirname, '__fixtures__');
 const fixture = (name: string) => join(FIXTURES, name);
 
+// Os PDFs ficam em base64 (<nome>.pdf.b64): o import do Google AI Studio falha com arquivos binários.
 async function readPdf(name: string): Promise<PageLines[]> {
-  return extractLines(new Uint8Array(readFileSync(fixture(name))), pdfjs);
+  return extractLines(new Uint8Array(Buffer.from(readFileSync(fixture(`${name}.b64`), 'utf8'), 'base64')), pdfjs);
 }
 
 /** Laudo montado à mão, uma página, para os casos pontuais. */
@@ -56,7 +57,9 @@ describe('PDFs sintéticos do lab-report-fixtures (gabarito por campo)', () => {
     const b = want.replace(/\s+/g, '').toLowerCase();
     return a === b || (num(a) === num(b) * 1000 && a[0] === b[0].replace(/\d/, a[0]));
   };
-  const files = readdirSync(FIXTURES).filter((f) => /^sintetico-precisa-.*\.pdf$/.test(f));
+  const files = readdirSync(FIXTURES)
+    .filter((f) => /^sintetico-precisa-.*\.pdf\.b64$/.test(f))
+    .map((f) => f.replace(/\.b64$/, ''));
 
   it.each(files)('%s: extrai todos os campos e nada além deles', async (file) => {
     const expected: { label: string; display: string }[] = JSON.parse(
