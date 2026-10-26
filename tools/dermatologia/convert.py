@@ -1,7 +1,7 @@
 """Manual de Dermatologia (HTML) -> JSON por capítulo + imagens principais.
 
-Uso (na pasta med_study-main):
-  python3 ../tools/dermatologia/convert.py <manual.html> src/dermatologia public/derm
+Uso (na raiz do repositório):
+  python3 tools/dermatologia/convert.py <manual.html> src/dermatologia public/derm
 Ignora questões (quiz) e o simulado; mantém todo o texto clínico.
 """
 import base64, json, os, re, sys
