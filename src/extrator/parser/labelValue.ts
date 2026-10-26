@@ -210,7 +210,7 @@ export function parseLabelValue(pages: PageLines[], layout: Layout): ParsedRepor
       if (skip.some((re) => re.test(line))) continue;
       const inline = layout.inlineTitle?.exec(line);
       if (inline) {
-        exam = inline[1].trim();
+        exam = cleanTitle(inline[1]);
         inHistory = false;
         examHasResult = false;
         afterResultHeader = true; // o valor pode vir sozinho na linha de baixo
@@ -223,7 +223,12 @@ export function parseLabelValue(pages: PageLines[], layout: Layout): ParsedRepor
       afterResultHeader = RESULT_HEADER.test(line);
       if (afterResultHeader) continue;
 
-      const row = bare ?? (inHistory ? null : parseRow(line, layout));
+      // Cultura sem crescimento ("Não houve desenvolvimento de micro-organismos"): resultado negativo.
+      const culture: Row | null =
+        !inHistory && !examHasResult && CULTURE_EXAM.test(exam) && NO_GROWTH.test(line)
+          ? { label: 'RESULTADO', values: [{ value: 'Negativa', qualitative: true }] }
+          : null;
+      const row = culture ?? bare ?? (inHistory ? null : parseRow(line, layout));
       if (row && row.label === 'RESULTADO') {
         if (examHasResult) exam = '';
         examHasResult = true;
@@ -248,7 +253,7 @@ export function parseLabelValue(pages: PageLines[], layout: Layout): ParsedRepor
         }
         report.items.push({ ...row, exam: exam || row.label, page: page.page, source: line });
       } else if (layout.isTitle(line, lines[i + 1] ?? '')) {
-        exam = line;
+        exam = cleanTitle(line);
         inHistory = false;
         examHasResult = false;
       }
@@ -273,7 +278,7 @@ export const RESULT_HEADER = /^(?:RESULTADOS?|R\s?E\s?S\s?U\s?L\s?T\s?A\s?D\s?O)
 const CONTINUATION = /^(?![(*]?\s*(material|m[ée]todo|amostra|valor|nota|obs|resultado|refer|legenda|a interpreta))[-(]?\s*[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s\-()/]{1,40}$/i;
 const BARE_VALUE = new RegExp(String.raw`^(${NUM})\s*(.*)$`);
 
-type Row = Pick<ExamItem, 'label' | 'values' | 'continuation' | 'prefix'>;
+type Row = Pick<ExamItem, 'label' | 'values' | 'continuation' | 'prefix' | 'comparatorRow'>;
 
 /** Valor sem rótulo: vale como "RESULTADO" do exame atual, desde que traga unidade. */
 function parseBareValue(line: string): Row | null {
@@ -288,6 +293,14 @@ function parseRow(raw: string, layout: Layout): Row | null {
   const line = raw.replace(ROW_PREFIX, '');
   const r = resultText(raw);
   if (r) return r;
+  // "PSA TOTAL: Inferior a 0,03 ng/mL": resultado com comparador depois dos dois-pontos.
+  const c = COMPARATOR_ROW.exec(line);
+  if (c && !REFERENCE_LABEL.test(c[1])) {
+    const [value] = readMeasurements([c[3], ...c[4].split(/\s+/).filter(Boolean)]);
+    const label = cleanLabel(c[1]);
+    const values = [{ ...value, value: (/menor|inferior/i.test(c[2]) ? '<' : '>') + value.value }];
+    if (layout.accepts({ label, colon: true, values })) return { label, values, comparatorRow: true };
+  }
   const m = ROW.exec(line);
   if (m) {
     const [, rawLabel, colon, first, rest] = m;
@@ -314,6 +327,15 @@ function parseRow(raw: string, layout: Layout): Row | null {
 }
 
 const COMPARATOR_SUFFIX = /\s(inferior\s+a|menor\s+(?:que|do\s+que)|abaixo\s+de|superior\s+a|maior\s+(?:que|do\s+que)|acima\s+de)$/i;
+
+const COMPARATOR_ROW = new RegExp(String.raw`^([A-Za-zÀ-ÿ][^:]{1,60}?)\s*:\s*(menor|inferior|maior|superior)\s+(?:que|a)\s+(${NUM})\s*(.*)$`, 'i');
+// Faixas de referência escritas do mesmo jeito ("Adultos: Inferior a 190 mg/dL") não são resultado.
+const REFERENCE_LABEL = /^(normal|diabetes|pr[ée]-?diabetes|defici[êe]ncia|insufici[êe]ncia|sufici[êe]ncia|desej[áa]vel|[óo]timo|lim[íi]trofe|alto|baix[oa]|adultos?|crian[çc]as?|homens?|mulheres?|at[ée]|acima|idade|meta|valor|refer[êe]ncia|pacientes?|n[ãa]o|com|sem|risco|fase|gestantes?|p[óo]s|pr[ée])\b/i;
+const CULTURE_EXAM = /cultura/i;
+const NO_GROWTH = /n[ãa]o\s+(?:houve|foi\s+observad[oa]|ocorreu)\s+(?:desenvolvimento|crescimento)|aus[êe]ncia\s+de\s+crescimento|cultura\s+negativa/i;
+
+/** Título do exame sem a data da coleta que alguns laudos imprimem na mesma linha. */
+const cleanTitle = (line: string) => line.replace(/\s+Data(?:\s+da)?(?:\s+Coleta\s*:.*)?$/i, '').trim();
 
 // "Resultado: Menor que 2.00 UI/L", "Resultado: AMOSTRA NÃO REAGENTE PARA HIV".
 const RESULT_TEXT = /^RESULTADOS?\s*\.*\s*:\s*(.{2,80})$/i;

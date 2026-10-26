@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { readPdfFile } from './extrator/pdf/browser';
 import {
-  extractDocument, buildLine, buildImagingLine, formatValue, shortDate, DEFAULT_OPTIONS,
+  extractDocument, buildLine, buildImagingLine, formatValue, shortDate, DEFAULT_OPTIONS, PANELS,
   type DocumentKind, type ImagingReport, type LineEntry, type LineOptions, type ParsedReport,
 } from './extrator';
 
@@ -92,7 +92,8 @@ export default function ExtratorExamesMain() {
           ...l.imaging.filter((r) => r.selected).map((r) => buildImagingLine(r, options)),
         ])
         .filter(Boolean)
-        .join('\n'),
+        // Em lista, uma linha em branco separa um laudo do outro.
+        .join(options.list ? '\n\n' : '\n'),
     [laudos, options],
   );
   const finalText = editedText ?? generatedText;
@@ -143,9 +144,13 @@ export default function ExtratorExamesMain() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const setOption = (key: keyof LineOptions) => {
+  const setOption = (key: 'units' | 'date' | 'grouped') => {
     setEditedText(null);
     setOptions((o) => ({ ...o, [key]: !o[key] }));
+  };
+  const setList = (list: boolean) => {
+    setEditedText(null);
+    setOptions((o) => ({ ...o, list }));
   };
 
   const prontos = laudos.filter((l) => l.status === 'pronto');
@@ -230,6 +235,22 @@ export default function ExtratorExamesMain() {
               <div className="flex flex-wrap items-center gap-2">
                 <Toggle label="Unidades" on={options.units} onClick={() => setOption('units')} />
                 <Toggle label="Data" on={options.date} onClick={() => setOption('date')} />
+                <Toggle label="Agrupar" on={options.grouped} onClick={() => setOption('grouped')} />
+                <div className="flex rounded-xl border border-line overflow-hidden text-xs font-bold" role="group" aria-label="Formato do texto">
+                  {[
+                    { list: false, label: 'Em linha' },
+                    { list: true, label: 'Em lista' },
+                  ].map((o) => (
+                    <button
+                      key={o.label}
+                      onClick={() => setList(o.list)}
+                      aria-pressed={options.list === o.list}
+                      className={`px-3 py-2 cursor-pointer ${options.list === o.list ? 'bg-teal-500/15 text-teal-200' : 'bg-card text-ink-muted hover:text-brand-navy'}`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
                 <button
                   onClick={clearAll}
                   className="px-3 py-2 rounded-xl border border-line hover:border-red-400/60 text-xs font-bold text-ink-muted hover:text-red-300 flex items-center gap-1.5 cursor-pointer bg-card"
@@ -250,7 +271,7 @@ export default function ExtratorExamesMain() {
               id="extrator-saida"
               value={lendo && !finalText ? 'Lendo o PDF…' : finalText}
               onChange={(e) => setEditedText(e.target.value)}
-              rows={Math.min(14, Math.max(3, Math.ceil(finalText.length / 110) + prontos.length))}
+              rows={Math.min(18, Math.max(3, finalText.split('\n').reduce((n, l) => n + Math.max(1, Math.ceil(l.length / 110)), 0)))}
               spellCheck={false}
               className="w-full rounded-xl bg-bg border border-line p-3 font-mono text-sm text-ink leading-relaxed focus:outline-none focus:border-teal-500/60 resize-y"
             />
@@ -384,8 +405,14 @@ function LaudoCard({
               </tr>
             </thead>
             <tbody>
-              {entries.map((e) => (
-                <tr key={e.id} className={`border-t border-line/60 ${e.selected ? '' : 'opacity-50'}`}>
+              {(options.grouped ? [...entries].sort((a, b) => a.panel - b.panel) : entries).map((e, i, list) => (
+                <React.Fragment key={e.id}>
+                {options.grouped && (i === 0 || list[i - 1].panel !== e.panel) && (
+                  <tr className="bg-teal-500/5">
+                    <td colSpan={5} className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-teal-300">{PANELS[e.panel].name}</td>
+                  </tr>
+                )}
+                <tr className={`border-t border-line/60 ${e.selected ? '' : 'opacity-50'}`}>
                   <td className="px-4 py-1.5">
                     <input
                       type="checkbox"
@@ -409,6 +436,7 @@ function LaudoCard({
                   </td>
                   <td className="px-2 py-1.5 text-ink-muted">{e.item.page}</td>
                 </tr>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
