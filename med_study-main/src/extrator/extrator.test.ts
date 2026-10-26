@@ -3,7 +3,10 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { extractLines, type PageLines } from './pdf/extract';
-import { extractReport, buildLine, type LineEntry } from './index';
+import { extractReport, buildLine, DEFAULT_OPTIONS, type LineEntry } from './index';
+
+/** Ordem do laudo, numa linha só: o formato que os gabaritos abaixo conferem. */
+const AS_PRINTED = { ...DEFAULT_OPTIONS, grouped: false };
 
 const FIXTURES = join(__dirname, '__fixtures__');
 const fixture = (name: string) => join(FIXTURES, name);
@@ -86,7 +89,7 @@ describe('PDFs sintéticos do Exames-de-Sangue (linha completa conferida no PDF)
 
   it.each(Object.entries(LINES))('%s', async (file, line) => {
     const { report, entries } = extractReport(await readPdf(file));
-    expect(buildLine(entries, report.collectedAt)).toBe(line);
+    expect(buildLine(entries, report.collectedAt, AS_PRINTED)).toBe(line);
   });
 });
 
@@ -292,5 +295,98 @@ describe('erros da primeira testagem', () => {
         'Amarelo Citrino',
       ),
     ).toEqual(['Glicemia 90']);
+  });
+});
+
+// Formato de um laboratório de Sorocaba/Iperó: título com a data da coleta na mesma linha,
+// "Resultado 65 mg/dL Valor de referência" e comparador depois dos dois-pontos.
+const TITULO_COM_COLETA = fromLines(
+  'HEMOGLOBINA GLICADA - Hb1ac Data Coleta: 08/10/2026 às 09:36:44',
+  'Resultado Valor de referência',
+  'Hb A1c: 7,7 % Normal: Menor que 5,7%',
+  'Diabetes: Maior que 6,4%',
+  'Hb A1a: 0,9 %',
+  'Hb F: 0,8 %',
+  'Hb A1c Lábil: 2,6 %',
+  'Glicemia estimada 174 mg/dL',
+  'COLESTEROL - LDL Data Coleta: 08/10/2026 às 09:36:50',
+  'Resultado 65 mg/dL Valor de referência',
+  'Adultos acima de 20 anos: Inferior a 130 mg/dL',
+  'COLESTEROL - HDL Data Coleta: 08/10/2026 às 09:36:47',
+  'Resultado 43 mg/dL Valor de referência',
+  'GLICEMIA DE JEJUM Data Coleta: 08/10/2026 às 09:36:43',
+  'Resultado 137 mg/dL Valor de referência',
+  'Diabetes mellitus tipo 2: Superior a 125 mg/dL',
+  'PSA TOTAL E LIVRE Data Coleta: 08/10/2026 às 09:37:37',
+  'Resultado Valor de referência',
+  'PSA TOTAL: Inferior a 0,03 ng/mL Até 60 anos.....: Inferior a 2,50 ng/mL',
+  'PSA LIVRE: Inferior a 0,02 ng/mL Não há valores de referência',
+  'UROCULTURA E ANTIBIOGRAMA Data Coleta: 08/10/2026 às 09:37:36',
+  'Resultado: Valor de Referencia',
+  'Não houve desenvolvimento de',
+  'micro-organismos na amostra',
+  'HEMOGRAMA COMPLETO Data Coleta: 08/10/2026 às 09:36:40',
+  'Hemoglobina: 14,4 g/dL',
+  'CREATININA Data Coleta: 08/10/2026 às 09:37:06',
+  'Resultado 0,97 mg/dL Valor de referência',
+);
+
+describe('título com a data da coleta e comparador depois dos dois-pontos', () => {
+  it('lê LDL, HDL, glicemia, HbA1c, PSA e urocultura; frações do HPLC e referências ficam de fora', () => {
+    const { entries } = extractReport(TITULO_COM_COLETA);
+    const got = Object.fromEntries(selected(entries).map((e) => [e.abbr, e.value]));
+    expect(got).toEqual({
+      Hb: '14,4',
+      'PSA livre': '<0,02',
+      'PSA total': '<0,03',
+      Glicemia: '137',
+      HbA1c: '7,7',
+      'Glicemia média est.': '174',
+      HDL: '43',
+      LDL: '65',
+      Urocultura: 'Negativa',
+      Cr: '0,97',
+    });
+    expect(entries.some((e) => /A1A|LÁBIL|^HB F$/i.test(e.abbr))).toBe(false);
+  });
+});
+
+describe('agrupamento por painel', () => {
+  const { report, entries } = extractReport(TITULO_COM_COLETA);
+  const opts = { units: false, date: true, grouped: true, list: false };
+
+  it('em linha: exames do mesmo painel juntos, sem o nome do painel', () => {
+    expect(buildLine(entries, report.collectedAt, opts)).toBe(
+      '(08/10/26) Hb 14,4 | Glicemia 137 | HbA1c 7,7% | Glicemia média est. 174 | HDL 43 | LDL 65 | Cr 0,97 | PSA livre <0,02 | PSA total <0,03 | Urocultura Negativa',
+    );
+  });
+
+  it('em lista: uma linha por painel', () => {
+    expect(buildLine(entries, report.collectedAt, { ...opts, list: true }).split('\n')).toEqual([
+      '(08/10/26)',
+      'Hb 14,4',
+      'Glicemia 137 | HbA1c 7,7% | Glicemia média est. 174',
+      'HDL 43 | LDL 65',
+      'Cr 0,97',
+      'PSA livre <0,02 | PSA total <0,03',
+      'Urocultura Negativa',
+    ]);
+  });
+
+  it('sem agrupar, em lista: um exame por linha', () => {
+    const lines = buildLine(entries, report.collectedAt, { ...opts, grouped: false, list: true }).split('\n');
+    expect(lines).toHaveLength(11);
+    expect(lines[0]).toBe('(08/10/26)');
+  });
+
+  it('a urina vai para o painel de urina, depois do sangue', () => {
+    const urine = extractReport(
+      fromLines('URINA TIPO I (EAS)', 'pH: 5,5', 'Nitrito: Negativo', 'GLICOSE', 'Resultado: 90 mg/dL', 'UREIA', 'Resultado: 30 mg/dL'),
+    );
+    expect(buildLine(urine.entries, undefined, { ...opts, list: true }).split('\n')).toEqual([
+      'Glicemia 90',
+      'Ur 30',
+      'Urina: pH 5,5, Nitrito Negativo',
+    ]);
   });
 });
