@@ -22,6 +22,8 @@ export interface ExamItem {
   continuation?: string;
   /** Linha anterior só com texto, que pode ser o começo do nome ("CONCENTRAÇÃO DE HEMOGLOBINA" / "CORPUSCULAR MÉDIA: 32,4"). */
   prefix?: string;
+  /** "Rótulo: Inferior a 0,03": só vale se o rótulo for um exame conhecido (faixas de referência têm o mesmo formato). */
+  comparatorRow?: boolean;
 }
 
 export interface ParsedReport {
