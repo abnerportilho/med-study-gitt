@@ -1,8 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
-  Zap, ShieldAlert, AlertCircle, CheckCircle2, Copy, Trash2, 
-  Printer, Check, Search, Plus, Sparkles, Filter, AlertTriangle,
-  Stethoscope, Info, ArrowRight, ShieldCheck, X
+  Bot, 
+  User, 
+  Send, 
+  Sparkles, 
+  AlertTriangle, 
+  AlertCircle, 
+  CheckCircle2, 
+  ShieldAlert, 
+  Trash2, 
+  Copy, 
+  Check, 
+  Plus, 
+  X, 
+  Search, 
+  Activity, 
+  ArrowRight, 
+  RefreshCw,
+  HelpCircle,
+  Pill
 } from 'lucide-react';
 import { 
   DRUGS_DATABASE, 
@@ -11,31 +27,110 @@ import {
   DrugInteraction 
 } from './data/medicamentosData';
 
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'bot';
+  timestamp: string;
+  drugs: string[];
+  interactions: DrugInteraction[];
+  text?: string;
+  isInitial?: boolean;
+}
+
 export default function RastreadorInteracoesMain() {
-  // Prescription drug IDs
+  // Selected drugs state for active query
   const [selectedDrugIds, setSelectedDrugIds] = useState<string[]>([
     'enalapril',
     'espironolactona',
     'ibuprofeno'
   ]);
-  const [copied, setCopied] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSystemFilter, setSelectedSystemFilter] = useState('todos');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Selected drug items
-  const selectedDrugs = useMemo(() => {
-    return DRUGS_DATABASE.filter(d => selectedDrugIds.includes(d.id));
-  }, [selectedDrugIds]);
+  // Chat message thread
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    // Initial analysis for the default drugs
+    const idA = 'enalapril';
+    const idB = 'espironolactona';
+    const idC = 'ibuprofeno';
+    const initialDrugs = [idA, idB, idC];
 
-  // Detected interactions among the selected drugs
-  const detectedInteractions = useMemo(() => {
+    const detected: DrugInteraction[] = [];
+    for (let i = 0; i < initialDrugs.length; i++) {
+      for (let j = i + 1; j < initialDrugs.length; j++) {
+        const match = DRUG_INTERACTIONS_DATABASE.find(inter => 
+          (inter.drugAId === initialDrugs[i] && inter.drugBId === initialDrugs[j]) ||
+          (inter.drugAId === initialDrugs[j] && inter.drugBId === initialDrugs[i])
+        );
+        if (match) detected.push(match);
+      }
+    }
+
+    return [
+      {
+        id: 'msg-welcome',
+        sender: 'bot',
+        timestamp: 'Agora',
+        drugs: [],
+        interactions: [],
+        isInitial: true,
+        text: 'Olá, Dr(a)! Sou seu assistente farmacológico para análise de polifarmácia e segurança da prescrição. Selecione 2 ou mais medicamentos abaixo para eu avaliar se há interações medicamentosas, contraindicações ou se a associação é segura.'
+      },
+      {
+        id: 'msg-initial-user',
+        sender: 'user',
+        timestamp: 'Agora',
+        drugs: initialDrugs,
+        interactions: []
+      },
+      {
+        id: 'msg-initial-bot',
+        sender: 'bot',
+        timestamp: 'Agora',
+        drugs: initialDrugs,
+        interactions: detected
+      }
+    ];
+  });
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Drug resolution helper
+  const getDrug = (id: string): DrugItem | undefined => {
+    return DRUGS_DATABASE.find(d => d.id === id);
+  };
+
+  // Filtered drug options for autocomplete search
+  const filteredSuggestions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase().trim();
+    return DRUGS_DATABASE.filter(drug => 
+      !selectedDrugIds.includes(drug.id) && (
+        drug.name.toLowerCase().includes(q) ||
+        drug.brandNames.some(b => b.toLowerCase().includes(q)) ||
+        drug.classCategory.toLowerCase().includes(q)
+      )
+    ).slice(0, 8);
+  }, [searchQuery, selectedDrugIds]);
+
+  // Evaluate interactions for an arbitrary list of drug IDs
+  const evaluateInteractions = (drugIds: string[]): DrugInteraction[] => {
     const results: DrugInteraction[] = [];
-    if (selectedDrugIds.length < 2) return results;
+    if (drugIds.length < 2) return results;
 
-    for (let i = 0; i < selectedDrugIds.length; i++) {
-      for (let j = i + 1; j < selectedDrugIds.length; j++) {
-        const idA = selectedDrugIds[i];
-        const idB = selectedDrugIds[j];
+    for (let i = 0; i < drugIds.length; i++) {
+      for (let j = i + 1; j < drugIds.length; j++) {
+        const idA = drugIds[i];
+        const idB = drugIds[j];
 
         const match = DRUG_INTERACTIONS_DATABASE.find(inter => 
           (inter.drugAId === idA && inter.drugBId === idB) ||
@@ -48,471 +143,527 @@ export default function RastreadorInteracoesMain() {
       }
     }
     return results;
-  }, [selectedDrugIds]);
-
-  // Severity stats
-  const severityStats = useMemo(() => {
-    return {
-      contraindicated: detectedInteractions.filter(i => i.severity === 'contraindicated').length,
-      major: detectedInteractions.filter(i => i.severity === 'major').length,
-      moderate: detectedInteractions.filter(i => i.severity === 'moderate').length,
-    };
-  }, [detectedInteractions]);
-
-  // Toggle drug in tracker
-  const toggleDrug = (drugId: string) => {
-    setSelectedDrugIds(prev => 
-      prev.includes(drugId) 
-        ? prev.filter(id => id !== drugId)
-        : [...prev, drugId]
-    );
   };
 
-  // Preset clinical scenarios
-  const applyPresetScenario = (scenario: 'triplice' | 'cardiopata' | 'psiquiatria' | 'sedacao' | 'anticoagulacao') => {
-    switch (scenario) {
-      case 'triplice':
-        setSelectedDrugIds(['enalapril', 'espironolactona', 'ibuprofeno']);
-        break;
-      case 'cardiopata':
-        setSelectedDrugIds(['varfarina', 'amiodarona', 'digoxina', 'clopidogrel']);
-        break;
-      case 'psiquiatria':
-        setSelectedDrugIds(['litio', 'enalapril', 'ibuprofeno']);
-        break;
-      case 'sedacao':
-        setSelectedDrugIds(['diazepam', 'morfina']);
-        break;
-      case 'anticoagulacao':
-        setSelectedDrugIds(['rivaroxabana', 'ibuprofeno', 'clopidogrel']);
-        break;
+  // Trigger analysis for current or provided selection
+  const handleAnalyze = (drugsToTest: string[] = selectedDrugIds) => {
+    if (drugsToTest.length < 2) return;
+
+    const detected = evaluateInteractions(drugsToTest);
+    const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      timestamp: nowTime,
+      drugs: [...drugsToTest],
+      interactions: []
+    };
+
+    const botMsg: ChatMessage = {
+      id: `bot-${Date.now() + 1}`,
+      sender: 'bot',
+      timestamp: nowTime,
+      drugs: [...drugsToTest],
+      interactions: detected
+    };
+
+    setMessages(prev => [...prev, userMsg, botMsg]);
+  };
+
+  // Add drug
+  const handleAddDrug = (drugId: string) => {
+    if (!selectedDrugIds.includes(drugId)) {
+      const next = [...selectedDrugIds, drugId];
+      setSelectedDrugIds(next);
+      setSearchQuery('');
+      setIsSearchOpen(false);
+      handleAnalyze(next);
     }
   };
 
-  // Copy clinical report
-  const copyInteractionReport = () => {
-    const reportText = `=== LAUDO DE SEGURANÇA FARMACOLÓGICA & INTERAÇÕES ===
-Data da Avaliação: ${new Date().toLocaleDateString('pt-BR')}
-
-FÁRMACOS ANALISADOS (${selectedDrugs.length}):
-${selectedDrugs.map(d => `- ${d.name} (${d.classCategory}) | Posologia: ${d.commonDose}`).join('\n')}
-
-ALERTAS IDENTIFICADOS (${detectedInteractions.length}):
-${detectedInteractions.length === 0 ? 'Nenhuma interação catalogada de alto risco identificada.' : 
-  detectedInteractions.map(i => {
-    const a = DRUGS_DATABASE.find(d => d.id === i.drugAId)?.name;
-    const b = DRUGS_DATABASE.find(d => d.id === i.drugBId)?.name;
-    return `[${i.severityLabel.toUpperCase()}] ${a} + ${b}
-Risco: ${i.clinicalRisk}
-Conduta Recomendada: ${i.management}
----`;
-  }).join('\n')}
-`;
-    navigator.clipboard.writeText(reportText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  // Remove drug
+  const handleRemoveDrug = (drugId: string) => {
+    const next = selectedDrugIds.filter(id => id !== drugId);
+    setSelectedDrugIds(next);
+    if (next.length >= 2) {
+      handleAnalyze(next);
+    }
   };
 
-  // Available drugs to add (filtered by search and category)
-  const availableDrugs = useMemo(() => {
-    return DRUGS_DATABASE.filter(drug => {
-      const matchesSearch = 
-        drug.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        drug.brandNames.some(b => b.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        drug.classCategory.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesSystem = selectedSystemFilter === 'todos' || drug.system === selectedSystemFilter;
-      return matchesSearch && matchesSystem;
-    });
-  }, [searchTerm, selectedSystemFilter]);
+  // Quick preset button click
+  const handleQuickPreset = (presetDrugs: string[]) => {
+    setSelectedDrugIds(presetDrugs);
+    handleAnalyze(presetDrugs);
+  };
+
+  // Clear everything
+  const handleClear = () => {
+    setSelectedDrugIds([]);
+    const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    setMessages(prev => [
+      ...prev,
+      {
+        id: `clear-${Date.now()}`,
+        sender: 'bot',
+        timestamp: nowTime,
+        drugs: [],
+        interactions: [],
+        text: 'Prescrição limpa. Selecione ou digite novos medicamentos para iniciar uma nova análise.'
+      }
+    ]);
+  };
+
+  // Copy clinical text report
+  const handleCopyReport = (drugs: string[], interactions: DrugInteraction[]) => {
+    const drugNames = drugs.map(id => getDrug(id)?.name || id).join(' + ');
+    let text = `=== AVALIAÇÃO DE INTERAÇÃO MEDICAMENTOSA ===\nAssociação: ${drugNames}\n`;
+    if (interactions.length === 0) {
+      text += `Status: Nenhuma interação farmacológica grave identificada entre essas drogas.\n`;
+    } else {
+      text += `Status: ${interactions.length} interação(ões) detectada(s):\n\n`;
+      interactions.forEach((inter, idx) => {
+        const drugA = getDrug(inter.drugAId)?.name || inter.drugAId;
+        const drugB = getDrug(inter.drugBId)?.name || inter.drugBId;
+        text += `${idx + 1}. [${inter.severityLabel.toUpperCase()}] ${drugA} + ${drugB}\n`;
+        text += `   - Risco: ${inter.clinicalRisk}\n`;
+        text += `   - Mecanismo: ${inter.mechanism}\n`;
+        text += `   - Conduta: ${inter.management}\n\n`;
+      });
+    }
+
+    navigator.clipboard.writeText(text);
+    setCopiedId(drugs.join('-'));
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   return (
-    <div className="flex-1 flex flex-col p-4 md:p-8 max-w-7xl mx-auto w-full gap-6">
+    <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full h-[calc(100vh-5rem)] p-2 sm:p-4 gap-3">
       
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-line pb-6">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-              <Zap size={22} />
-            </span>
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400 font-mono">
-              Módulo Separado & Autônomo
-            </span>
+      {/* Top Header */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
+            <Bot className="w-5 h-5 text-indigo-400" />
           </div>
-
-          <h1 className="text-2xl md:text-3xl font-black text-brand-navy tracking-tight">
-            Rastreador de Interações Medicamentosas Multidrogas
-          </h1>
-          <p className="text-xs md:text-sm text-ink-muted max-w-3xl leading-relaxed">
-            Ferramenta clínica autônoma para cruzamento de prescrições completas e polifarmácia. Monte a lista de fármacos do paciente e analise riscos de nefrotoxicidade, prolongamento de QTc, sangramento e superdosagem.
-          </p>
-        </div>
-
-        {/* Global Actions */}
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <button
-            onClick={copyInteractionReport}
-            className="px-3.5 py-2.5 rounded-xl border border-line hover:border-brand-blue text-xs font-bold text-brand-navy flex items-center gap-1.5 transition-all cursor-pointer bg-card"
-          >
-            {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
-            {copied ? 'Copiado para o Prontuário!' : 'Copiar Parecer Clínico'}
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2.5 rounded-xl font-bold text-xs bg-brand-blue hover:bg-blue-600 text-white flex items-center gap-2 shadow-md transition-all cursor-pointer"
-          >
-            <Printer size={16} />
-            Imprimir Laudo
-          </button>
-        </div>
-      </div>
-
-      {/* Preset Scenarios Strip */}
-      <div className="card p-5 border border-line bg-card/70 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-brand-navy uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles size={15} className="text-amber-400" />
-            Cenários de Risco em 1 Clique (Polifarmácia Hospitalar & Ambulatorial):
-          </span>
-          <button
-            onClick={() => setSelectedDrugIds([])}
-            className="text-xs font-bold text-ink-muted hover:text-red-400 flex items-center gap-1 cursor-pointer transition-colors"
-          >
-            <Trash2 size={13} /> Limpar Seleção
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-          <button
-            onClick={() => applyPresetScenario('triplice')}
-            className="p-3 rounded-xl border border-red-500/40 bg-red-950/15 hover:bg-red-950/30 text-left transition-all cursor-pointer group"
-          >
-            <span className="font-bold text-xs text-red-400 block flex items-center gap-1">
-              ⚠️ Tríplice Renal
-            </span>
-            <span className="text-[10px] text-ink-muted line-clamp-1">Enalapril + Espironolactona + Ibuprofeno</span>
-          </button>
-
-          <button
-            onClick={() => applyPresetScenario('cardiopata')}
-            className="p-3 rounded-xl border border-blue-500/40 bg-blue-950/15 hover:bg-blue-950/30 text-left transition-all cursor-pointer group"
-          >
-            <span className="font-bold text-xs text-blue-400 block flex items-center gap-1">
-              🫀 Cardiopata Complexo
-            </span>
-            <span className="text-[10px] text-ink-muted line-clamp-1">Varfarina + Amiodarona + Digoxina</span>
-          </button>
-
-          <button
-            onClick={() => applyPresetScenario('psiquiatria')}
-            className="p-3 rounded-xl border border-purple-500/40 bg-purple-950/15 hover:bg-purple-950/30 text-left transition-all cursor-pointer group"
-          >
-            <span className="font-bold text-xs text-purple-400 block flex items-center gap-1">
-              🧠 Psiquiatria & AINE
-            </span>
-            <span className="text-[10px] text-ink-muted line-clamp-1">Lítio + Enalapril + Ibuprofeno</span>
-          </button>
-
-          <button
-            onClick={() => applyPresetScenario('sedacao')}
-            className="p-3 rounded-xl border border-amber-500/40 bg-amber-950/15 hover:bg-amber-950/30 text-left transition-all cursor-pointer group"
-          >
-            <span className="font-bold text-xs text-amber-400 block flex items-center gap-1">
-              🚨 Sedação Excessiva
-            </span>
-            <span className="text-[10px] text-ink-muted line-clamp-1">Diazepam + Morfina</span>
-          </button>
-
-          <button
-            onClick={() => applyPresetScenario('anticoagulacao')}
-            className="p-3 rounded-xl border border-rose-500/40 bg-rose-950/15 hover:bg-rose-950/30 text-left transition-all cursor-pointer group"
-          >
-            <span className="font-bold text-xs text-rose-400 block flex items-center gap-1">
-              🩸 Hemorragia & DOAC
-            </span>
-            <span className="text-[10px] text-ink-muted line-clamp-1">Rivaroxabana + Ibuprofeno + Clopidogrel</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Selected Drugs Active Prescription Chips */}
-      <div className="card p-5 border border-line bg-gradient-to-r from-card via-card to-blue-950/10 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-line/60 pb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-brand-navy">
-              Fármacos Atuais na Prescrição:
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-brand-blue/20 text-brand-blue text-xs font-black">
-              {selectedDrugs.length} selecionados
-            </span>
-          </div>
-
-          <span className="text-xs text-ink-muted">
-            {selectedDrugs.length < 2 ? 'Adicione pelo menos 2 fármacos para rastrear interações' : 'Algoritmo ativo cruzando todos os pares'}
-          </span>
-        </div>
-
-        {selectedDrugs.length === 0 ? (
-          <div className="p-6 text-center text-xs text-ink-muted border border-dashed border-line rounded-xl">
-            Nenhum fármaco adicionado à prescrição. Selecione os medicamentos no catálogo abaixo para iniciar o rastreamento.
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {selectedDrugs.map(drug => (
-              <div 
-                key={drug.id}
-                className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl bg-bg border border-line hover:border-brand-blue/60 text-brand-navy text-xs font-bold transition-all shadow-sm group"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span>{drug.name}</span>
-                <span className="text-[10px] text-ink-muted font-normal">({drug.brandNames[0]})</span>
-                <button
-                  onClick={() => toggleDrug(drug.id)}
-                  className="w-5 h-5 rounded-md hover:bg-red-500/20 hover:text-red-400 text-ink-muted flex items-center justify-center transition-colors cursor-pointer"
-                  title="Remover fármaco da análise"
-                >
-                  <X size={13} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Risk Metrics Cards */}
-      {selectedDrugIds.length >= 2 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className={`card p-4 flex flex-col justify-center border transition-all ${
-            severityStats.contraindicated > 0 ? 'border-red-500/50 bg-red-500/10' : 'border-line'
-          }`}>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">Contraindicada / Grave</span>
-            <span className="text-3xl font-black text-red-400 mt-1">{severityStats.contraindicated}</span>
-            <span className="text-[10px] text-ink-muted">Risco crítico / Evitar associação</span>
-          </div>
-
-          <div className={`card p-4 flex flex-col justify-center border transition-all ${
-            severityStats.major > 0 ? 'border-amber-500/50 bg-amber-500/10' : 'border-line'
-          }`}>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Alta Gravidade</span>
-            <span className="text-3xl font-black text-amber-400 mt-1">{severityStats.major}</span>
-            <span className="text-[10px] text-ink-muted">Monitoramento estrito de parâmetros</span>
-          </div>
-
-          <div className="card p-4 flex flex-col justify-center border border-line">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">Moderada</span>
-            <span className="text-3xl font-black text-blue-400 mt-1">{severityStats.moderate}</span>
-            <span className="text-[10px] text-ink-muted">Ajuste de dose ou intervalo</span>
-          </div>
-
-          <div className="card p-4 flex flex-col justify-center border border-line">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Cruzamentos Analisados</span>
-            <span className="text-3xl font-black text-emerald-400 mt-1">{detectedInteractions.length}</span>
-            <span className="text-[10px] text-ink-muted">Pares catalogados na base</span>
-          </div>
-        </div>
-      )}
-
-      {/* Interactions Results Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-brand-navy flex items-center gap-2">
-            <ShieldCheck size={20} className="text-brand-blue" />
-            Resultado da Análise Farmacológica Cruzada
-          </h2>
-          {selectedDrugIds.length >= 2 && (
-            <span className="text-xs font-mono text-ink-muted">
-              {detectedInteractions.length} {detectedInteractions.length === 1 ? 'interação identificada' : 'interações identificadas'}
-            </span>
-          )}
-        </div>
-
-        {selectedDrugIds.length < 2 ? (
-          <div className="card p-10 text-center flex flex-col items-center gap-3 border border-line">
-            <Zap size={36} className="text-slate-600" />
-            <h3 className="font-bold text-base text-brand-navy">Prescrição Mínima: Selecione pelo menos 2 medicamentos</h3>
-            <p className="text-xs text-ink-muted max-w-md">
-              Adicione medicamentos abaixo para verificar sinergismo tóxico, bloqueio metabólico de CYP450, indução ou antagonismo farmacológico.
-            </p>
-          </div>
-        ) : detectedInteractions.length === 0 ? (
-          <div className="card p-6 border border-emerald-500/30 bg-emerald-500/5 flex items-center gap-4 rounded-2xl">
-            <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
-              <CheckCircle2 size={28} />
-            </div>
-            <div>
-              <h3 className="font-bold text-base text-emerald-300">Nenhuma interação grave catalogada entre os fármacos selecionados</h3>
-              <p className="text-xs text-ink-muted mt-0.5">
-                Os {selectedDrugs.length} medicamentos selecionados não possuem alertas de contraindicação direta cruzada. Mantenha a vigilância habitual de função renal, hepática e eletrólitos.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {detectedInteractions.map((inter, idx) => {
-              const drugA = DRUGS_DATABASE.find(d => d.id === inter.drugAId);
-              const drugB = DRUGS_DATABASE.find(d => d.id === inter.drugBId);
-              const isContraindicated = inter.severity === 'contraindicated';
-              const isMajor = inter.severity === 'major';
-
-              return (
-                <div
-                  key={idx}
-                  className={`card p-6 border rounded-2xl flex flex-col gap-4 transition-all shadow-lg ${
-                    isContraindicated 
-                      ? 'border-red-500/60 bg-gradient-to-r from-red-950/25 via-card to-card' 
-                      : isMajor
-                      ? 'border-amber-500/50 bg-gradient-to-r from-amber-950/20 via-card to-card'
-                      : 'border-blue-500/40 bg-card'
-                  }`}
-                >
-                  {/* Pair Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line/60 pb-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-lg font-black text-brand-navy">
-                        {drugA?.name} <span className="text-ink-muted font-normal">+</span> {drugB?.name}
-                      </span>
-                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
-                        isContraindicated 
-                          ? 'bg-red-500 text-white' 
-                          : isMajor 
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
-                          : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
-                      }`}>
-                        {inter.severityLabel}
-                      </span>
-                    </div>
-
-                    <div className="text-xs text-ink-muted font-mono">
-                      {drugA?.classCategory} × {drugB?.classCategory}
-                    </div>
-                  </div>
-
-                  {/* 3 Detail Blocks */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                    <div className="p-3.5 rounded-xl bg-bg border border-line space-y-1">
-                      <span className="font-bold text-slate-400 block flex items-center gap-1.5">
-                        <Info size={13} className="text-blue-400" />
-                        Mecanismo Farmacológico:
-                      </span>
-                      <p className="text-ink leading-relaxed text-[11px]">{inter.mechanism}</p>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-bg border border-line space-y-1">
-                      <span className="font-bold text-red-400 block flex items-center gap-1.5">
-                        <AlertTriangle size={13} className="text-red-400" />
-                        Risco Clínico no Paciente:
-                      </span>
-                      <p className="text-ink leading-relaxed text-[11px] font-semibold">{inter.clinicalRisk}</p>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 space-y-1">
-                      <span className="font-bold text-emerald-400 block flex items-center gap-1.5">
-                        <Stethoscope size={13} className="text-emerald-400" />
-                        Conduta Médica Recomendada:
-                      </span>
-                      <p className="text-slate-200 leading-relaxed text-[11px]">{inter.management}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Drug Selection Catalog Table (For adding to tracker) */}
-      <div className="card p-6 border border-line space-y-4 mt-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
           <div>
-            <h3 className="text-base font-bold text-brand-navy flex items-center gap-2">
-              <Search size={18} className="text-brand-blue" />
-              Catálogo de Fármacos Disponíveis para Cruzamento
-            </h3>
-            <p className="text-xs text-ink-muted">
-              Clique em qualquer medicamento para adicioná-lo ou removê-lo da prescrição em tempo real.
+            <div className="flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-1.5">
+                PharmBot: Assistente de Interações Medicamentosas
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Online
+              </span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Verificador conversacional em tempo real para polifarmácia e segurança da prescrição
             </p>
           </div>
-
-          {/* Search Input */}
-          <div className="relative min-w-[240px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Buscar droga ou classe..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-bg border border-line text-xs text-brand-navy focus:outline-none focus:border-brand-blue"
-            />
-          </div>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-          {[
-            { id: 'todos', label: 'Todos os Sistemas' },
-            { id: 'cardiovascular', label: 'Cardiovascular' },
-            { id: 'nefrologia', label: 'Nefrologia' },
-            { id: 'endocrinologia', label: 'Endócrino' },
-            { id: 'snc_psiquiatria', label: 'SNC & Psiquiatria' },
-            { id: 'analgesia_inflamacao', label: 'Analgesia' },
-            { id: 'infecciosas', label: 'Antimicrobianos' }
-          ].map(f => (
-            <button
-              key={f.id}
-              onClick={() => setSelectedSystemFilter(f.id)}
-              className={`text-xs font-bold px-3 py-1.5 rounded-xl shrink-0 transition-all cursor-pointer ${
-                selectedSystemFilter === f.id
-                  ? 'bg-brand-blue text-white shadow-sm'
-                  : 'bg-bg text-ink-muted hover:text-brand-navy border border-line'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <button
+            onClick={handleClear}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 bg-slate-950/60 hover:bg-slate-800 border border-slate-800 transition-all cursor-pointer"
+            title="Limpar conversa"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Limpar</span>
+          </button>
         </div>
+      </div>
 
-        {/* Grid of Drug Cards for 1-Click Toggle */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-          {availableDrugs.map(drug => {
-            const isSelected = selectedDrugIds.includes(drug.id);
+      {/* Quick Scenario Prompt Chips */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        <span className="text-[11px] font-semibold text-slate-400 shrink-0 flex items-center gap-1">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          Cenários Rápidos:
+        </span>
+        <button
+          onClick={() => handleQuickPreset(['enalapril', 'espironolactona', 'ibuprofeno'])}
+          className="px-2.5 py-1 rounded-lg text-xs bg-rose-950/30 hover:bg-rose-900/40 text-rose-300 border border-rose-900/50 whitespace-nowrap transition-all cursor-pointer"
+        >
+          🚨 Tríplice Whammy (Enalapril + Espironolactona + AINE)
+        </button>
+        <button
+          onClick={() => handleQuickPreset(['varfarina', 'amiodarona'])}
+          className="px-2.5 py-1 rounded-lg text-xs bg-amber-950/30 hover:bg-amber-900/40 text-amber-300 border border-amber-900/50 whitespace-nowrap transition-all cursor-pointer"
+        >
+          ⚠️ Varfarina + Amiodarona
+        </button>
+        <button
+          onClick={() => handleQuickPreset(['litio', 'ibuprofeno'])}
+          className="px-2.5 py-1 rounded-lg text-xs bg-purple-950/30 hover:bg-purple-900/40 text-purple-300 border border-purple-900/50 whitespace-nowrap transition-all cursor-pointer"
+        >
+          ⚡ Lítio + Ibuprofeno (Toxicidade)
+        </button>
+        <button
+          onClick={() => handleQuickPreset(['rivaroxabana', 'clopidogrel'])}
+          className="px-2.5 py-1 rounded-lg text-xs bg-rose-950/30 hover:bg-rose-900/40 text-rose-300 border border-rose-900/50 whitespace-nowrap transition-all cursor-pointer"
+        >
+          🩸 Sangramento (Rivaroxabana + Antiplaquetário)
+        </button>
+        <button
+          onClick={() => handleQuickPreset(['diazepam', 'morfina'])}
+          className="px-2.5 py-1 rounded-lg text-xs bg-blue-950/30 hover:bg-blue-900/40 text-blue-300 border border-blue-900/50 whitespace-nowrap transition-all cursor-pointer"
+        >
+          💤 Depressão Respiratória (BZD + Opioide)
+        </button>
+        <button
+          onClick={() => handleQuickPreset(['amoxicilina_clavulanato', 'paracetamol'])}
+          className="px-2.5 py-1 rounded-lg text-xs bg-emerald-950/30 hover:bg-emerald-900/40 text-emerald-300 border border-emerald-900/50 whitespace-nowrap transition-all cursor-pointer"
+        >
+          ✅ Sem Interação (Amoxi/Clav + Paracetamol)
+        </button>
+      </div>
+
+      {/* Main Chat Stream Container */}
+      <div className="flex-1 overflow-y-auto rounded-2xl bg-slate-950/80 border border-slate-800/80 p-3 sm:p-5 space-y-4">
+        {messages.map((msg) => {
+          if (msg.sender === 'user') {
             return (
-              <div
-                key={drug.id}
-                onClick={() => toggleDrug(drug.id)}
-                className={`p-3.5 rounded-xl border text-xs flex flex-col justify-between gap-2 cursor-pointer transition-all ${
-                  isSelected
-                    ? 'border-brand-blue bg-blue-950/25 ring-1 ring-brand-blue/50 shadow-md'
-                    : 'border-line bg-bg/80 hover:bg-card hover:border-slate-400'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="font-extrabold text-brand-navy text-sm">
-                      {drug.name}
-                    </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      isSelected ? 'bg-brand-blue text-white' : 'bg-card border border-line text-ink-muted'
-                    }`}>
-                      {isSelected ? '✓ Na Prescrição' : '+ Adicionar'}
-                    </span>
+              <div key={msg.id} className="flex justify-end items-start gap-2.5">
+                <div className="max-w-2xl bg-indigo-600 text-white rounded-2xl rounded-tr-none p-3.5 shadow-md space-y-2">
+                  <div className="flex items-center justify-between gap-3 text-indigo-200 text-[11px]">
+                    <span className="font-semibold">Prescrição Selecionada</span>
+                    <span>{msg.timestamp}</span>
                   </div>
-
-                  <p className="text-[11px] text-ink-muted line-clamp-1">
-                    {drug.brandNames.join(', ')}
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-1 font-mono line-clamp-1">
-                    {drug.classCategory}
-                  </p>
+                  <div className="text-xs font-medium">
+                    Por favor, analise as possíveis interações entre:
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {msg.drugs.map(id => {
+                      const drug = getDrug(id);
+                      return (
+                        <span 
+                          key={id}
+                          className="px-2 py-0.5 rounded-lg bg-indigo-800/80 text-white font-bold text-xs border border-indigo-400/30 flex items-center gap-1"
+                        >
+                          <Pill className="w-3 h-3 text-indigo-300" />
+                          {drug?.name || id}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
-
-                <div className="text-[10px] text-ink-muted border-t border-line/60 pt-2 flex items-center justify-between">
-                  <span className="font-semibold text-slate-300">Dose Usual:</span>
-                  <span className="font-mono text-brand-navy truncate max-w-[180px]">{drug.commonDose}</span>
+                <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 flex items-center justify-center shrink-0">
+                  <User className="w-4 h-4" />
                 </div>
               </div>
             );
-          })}
+          }
+
+          // Initial greeting message
+          if (msg.isInitial) {
+            return (
+              <div key={msg.id} className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-indigo-400 flex items-center justify-center shrink-0">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div className="max-w-2xl bg-slate-900 border border-slate-800 text-slate-200 rounded-2xl rounded-tl-none p-4 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span className="font-bold text-indigo-400">PharmBot</span>
+                    <span>{msg.timestamp}</span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-300">
+                    {msg.text}
+                  </p>
+                </div>
+              </div>
+            );
+          }
+
+          // Text-only bot message
+          if (msg.text && msg.interactions.length === 0 && msg.drugs.length === 0) {
+            return (
+              <div key={msg.id} className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-indigo-400 flex items-center justify-center shrink-0">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div className="max-w-2xl bg-slate-900 border border-slate-800 text-slate-300 rounded-2xl rounded-tl-none p-3.5 shadow-sm text-xs">
+                  {msg.text}
+                </div>
+              </div>
+            );
+          }
+
+          // Bot analysis response
+          const hasInteractions = msg.interactions.length > 0;
+          const hasContraindicated = msg.interactions.some(i => i.severity === 'contraindicated');
+          const hasMajor = msg.interactions.some(i => i.severity === 'major');
+
+          return (
+            <div key={msg.id} className="flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-indigo-950 border border-indigo-700/60 text-indigo-400 flex items-center justify-center shrink-0 mt-1">
+                <Bot className="w-4 h-4" />
+              </div>
+
+              <div className="flex-1 max-w-3xl space-y-3">
+                {/* Bot Summary Bubble */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-none p-4 shadow-md space-y-3">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-indigo-400">PharmBot Análise Clínica</span>
+                      <span>·</span>
+                      <span>{msg.drugs.length} drogas avaliadas</span>
+                    </div>
+                    <span>{msg.timestamp}</span>
+                  </div>
+
+                  {/* Verdict Banner */}
+                  {hasInteractions ? (
+                    <div className={`p-3 rounded-xl border flex items-start gap-3 ${
+                      hasContraindicated 
+                        ? 'bg-rose-950/40 border-rose-800 text-rose-200' 
+                        : hasMajor 
+                          ? 'bg-amber-950/40 border-amber-800 text-amber-200' 
+                          : 'bg-yellow-950/30 border-yellow-800/80 text-yellow-200'
+                    }`}>
+                      <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${
+                        hasContraindicated ? 'text-rose-400' : 'text-amber-400'
+                      }`} />
+                      <div className="space-y-0.5">
+                        <div className="font-bold text-xs sm:text-sm">
+                          {hasContraindicated 
+                            ? '🚨 ATENÇÃO: Interação Contraindicada Detectada!' 
+                            : hasMajor 
+                              ? '⚠️ ALERTA: Interação Farmacológica Grave / Maior Encontrada' 
+                              : '⚠️ Interação Moderada Detectada (Requer Monitorização)'}
+                        </div>
+                        <p className="text-[11px] opacity-90">
+                          Foram identificadas <strong>{msg.interactions.length} interação(ões)</strong> entre os medicamentos selecionados. Veja a conduta e os mecanismos recomendados abaixo:
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800/60 text-emerald-200 flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <div className="font-bold text-xs sm:text-sm text-emerald-300">
+                          ✅ Nenhuma Interação Farmacológica Maior Encontrada
+                        </div>
+                        <p className="text-[11px] text-emerald-200/90 leading-relaxed">
+                          A combinação entre os medicamentos analisados ({msg.drugs.map(id => getDrug(id)?.name).join(', ')}) não possui interações diretas graves ou contraindicações formais registradas em nossa base de farmacovigilância.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* List of Interaction Cards inside the Bot Bubble */}
+                  {hasInteractions && (
+                    <div className="space-y-3 pt-1">
+                      {msg.interactions.map((inter, idx) => {
+                        const drugA = getDrug(inter.drugAId);
+                        const drugB = getDrug(inter.drugBId);
+                        const isSevere = inter.severity === 'contraindicated' || inter.severity === 'major';
+
+                        return (
+                          <div 
+                            key={`${inter.drugAId}-${inter.drugBId}-${idx}`}
+                            className={`p-3.5 rounded-xl border text-xs space-y-2.5 transition-all ${
+                              inter.severity === 'contraindicated'
+                                ? 'bg-rose-950/20 border-rose-900/60'
+                                : inter.severity === 'major'
+                                  ? 'bg-amber-950/20 border-amber-900/60'
+                                  : 'bg-slate-950/60 border-slate-800'
+                            }`}
+                          >
+                            {/* Pair Title & Badge */}
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-black text-white text-sm">
+                                  {drugA?.name || inter.drugAId}
+                                </span>
+                                <span className="text-slate-400 font-bold">+</span>
+                                <span className="font-black text-white text-sm">
+                                  {drugB?.name || inter.drugBId}
+                                </span>
+                              </div>
+
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                inter.severity === 'contraindicated'
+                                  ? 'bg-rose-600 text-white'
+                                  : inter.severity === 'major'
+                                    ? 'bg-amber-600 text-white'
+                                    : 'bg-yellow-600/30 text-yellow-300 border border-yellow-500/30'
+                              }`}>
+                                {inter.severityLabel}
+                              </span>
+                            </div>
+
+                            {/* Clinical Risk */}
+                            <div className="space-y-1">
+                              <div className="text-[11px] font-semibold text-rose-300 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                                Risco Clínico ao Paciente:
+                              </div>
+                              <p className="text-slate-300 leading-relaxed text-xs pl-4 border-l-2 border-rose-500/40">
+                                {inter.clinicalRisk}
+                              </p>
+                            </div>
+
+                            {/* Mechanism */}
+                            <div className="space-y-1">
+                              <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                                <Activity className="w-3.5 h-3.5 text-indigo-400" />
+                                Mecanismo Farmacológico:
+                              </div>
+                              <p className="text-slate-400 text-[11px] leading-relaxed pl-4 border-l-2 border-slate-700">
+                                {inter.mechanism}
+                              </p>
+                            </div>
+
+                            {/* Management / Conduta */}
+                            <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                              <div className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+                                <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                                Conduta Prática Recomendada:
+                              </div>
+                              <p className="text-slate-200 text-xs leading-relaxed">
+                                {inter.management}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Bottom Action Footer for this analysis */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px]">
+                    <span className="text-slate-500 font-mono">
+                      Fonte: Base de Farmacologia Clínica & Diretrizes Brasileiras
+                    </span>
+                    <button
+                      onClick={() => handleCopyReport(msg.drugs, msg.interactions)}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all cursor-pointer"
+                    >
+                      {copiedId === msg.drugs.join('-') ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-emerald-400 font-medium">Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Copiar Laudo</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        <div ref={chatEndRef} />
+      </div>
+
+      {/* Interactive Bottom Control: Drug Selection & Input Bar */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xl space-y-3">
+        {/* Selected Drugs Active Chips */}
+        <div className="flex flex-wrap items-center gap-1.5 min-h-[32px]">
+          <span className="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
+            <Pill className="w-3.5 h-3.5 text-indigo-400" />
+            Drogas na consulta:
+          </span>
+
+          {selectedDrugIds.length === 0 ? (
+            <span className="text-xs text-slate-400 italic">
+              Nenhuma droga selecionada. Adicione drogas no campo abaixo.
+            </span>
+          ) : (
+            selectedDrugIds.map(id => {
+              const drug = getDrug(id);
+              return (
+                <span 
+                  key={id}
+                  className="px-2.5 py-1 rounded-xl bg-slate-950 text-slate-200 border border-slate-800 text-xs font-medium flex items-center gap-1.5 shadow-sm"
+                >
+                  <span className="font-bold text-white">{drug?.name || id}</span>
+                  <button 
+                    onClick={() => handleRemoveDrug(id)}
+                    className="text-slate-400 hover:text-rose-400 transition-colors p-0.5 rounded cursor-pointer"
+                    title="Remover droga"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })
+          )}
+        </div>
+
+        {/* Input & Autocomplete Search */}
+        <div className="relative">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchOpen(true);
+                }}
+                onFocus={() => setIsSearchOpen(true)}
+                placeholder="Digite o nome de um medicamento (ex: Enalapril, Amiodarona, Varfarina, Paracetamol, Metformina)..."
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={() => handleAnalyze()}
+              disabled={selectedDrugIds.length < 2}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer ${
+                selectedDrugIds.length >= 2
+                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
+                  : 'bg-slate-800 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              <span>Avaliar Prescrição</span>
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Autocomplete Dropdown List */}
+          {isSearchOpen && filteredSuggestions.length > 0 && (
+            <div className="absolute bottom-full mb-2 left-0 right-0 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50 max-h-60 overflow-y-auto">
+              <div className="p-2 text-[11px] font-semibold text-slate-400 border-b border-slate-800 bg-slate-950/80 flex justify-between items-center">
+                <span>Clique para adicionar à consulta:</span>
+                <span className="text-[10px] text-slate-400">Pressione ESC para fechar</span>
+              </div>
+              {filteredSuggestions.map(drug => (
+                <div
+                  key={drug.id}
+                  onClick={() => handleAddDrug(drug.id)}
+                  className="p-2.5 hover:bg-slate-800 text-xs flex items-center justify-between cursor-pointer border-b border-slate-800/40 last:border-none transition-colors"
+                >
+                  <div>
+                    <span className="font-bold text-white mr-2">{drug.name}</span>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      ({drug.classCategory})
+                    </span>
+                    <div className="text-[10px] text-slate-400">
+                      Nomes comerciais: {drug.brandNames.join(', ')}
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-indigo-400 font-semibold flex items-center gap-1 shrink-0">
+                    <Plus className="w-3.5 h-3.5" /> Adicionar
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

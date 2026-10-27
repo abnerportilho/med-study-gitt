@@ -1,6 +1,6 @@
 {
-  "summary":  "Plano de implementação para reestruturação completa do módulo de Dermatologia, alinhando-o ao padrão interativo dos outros módulos da plataforma (Cirurgia, Ginecologia, Cardiologia). O novo módulo organiza o conteúdo por grandes síndromes dermatológicas, incorpora atlas de lesões elementares, calculadoras clínicas (PASI, BSA, SCORAD, dose acumulada de isotretinoína), fluxogramas de conduta da SBD e guia posológico detalhado de corticoides tópicos e imunobiológicos.",
-  "updatedAt":  "2026-10-26T12:15:15.485698834Z",
+  "summary":  "Módulo de Neurologia concluído com êxito:\n- Encefalite Herpética (HSE) com evidências de 2026 (ensaio DexEnceph Lancet Neurol, metanálise Zhang 2026, encefalite pós-HSE anti-NMDAR)\n- Epilepsia e Nova Classificação ILAE 2025 (Beniczky et al., 2025), semiologia de lobos e ensaios SANAD I e II\n- Estado de Mal Epiléptico (EME) com tempos t1 (5 min) e t2 (30 min), fisiopatologia sináptica e protocolo ESETT/Glauser\n- Diagnóstico Diferencial com Síncope (Lempert 1994, Calgary Score) e Crises Funcionais/CNEP (Avbersek & Sisodiya, ensaio CODES)\n- Suíte de 4 Calculadoras Neurológicas interativas (Calgary, STESS, Doses EME por peso e Aciclovir IV com ajuste renal)\n- Integração ao App.tsx, SearchMain.tsx e link direto para o PDF anexo de 22 páginas.",
+  "updatedAt":  "2026-10-27T22:03:36.142588113Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

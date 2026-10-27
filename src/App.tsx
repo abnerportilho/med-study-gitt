@@ -15,6 +15,7 @@ import { twMerge } from 'tailwind-merge';
 import CirurgiaMain from './CirurgiaMain';
 import PreventivaMain from './PreventivaMain';
 import DermatologiaMain from './DermatologiaMain';
+import NeurologiaMain from './NeurologiaMain';
 import CKDEPICalculator from './CKDEPICalculator';
 import CKDPatientGuide from './CKDPatientGuide';
 import SCCPatho from './SCCPatho';
@@ -360,7 +361,10 @@ const SPECIALTIES = [
     name: 'Neurologia',
     icon: Brain,
     diseases: [
-      { id: 'neuro_placeholder', name: 'Em Breve...' }
+      { id: 'hse', name: 'Encefalite Herpética (HSE)' },
+      { id: 'epilepsia-eme', name: 'Epilepsia & Estado de Mal Epiléptico (EME)' },
+      { id: 'crise-vs-sincope', name: 'Crise vs Síncope & CNEP (Diagnóstico Diferencial)' },
+      { id: 'calculadoras-neuro', name: 'Calculadoras Neurológicas (Calgary, STESS & Doses)' }
     ]
   }
 ].map(s => ({
@@ -1575,6 +1579,12 @@ export default function App() {
           <PreventivaMain key={selectedDisease} initialTopic={selectedDisease} />
         ) : selectedSpecialty === 'dermatologia' ? (
           <DermatologiaMain 
+            key={selectedDisease} 
+            initialTopic={selectedDisease}
+            onSelectTopic={(topicId) => setSelectedDisease(topicId)}
+          />
+        ) : selectedSpecialty === 'neurologia' ? (
+          <NeurologiaMain 
             key={selectedDisease} 
             initialTopic={selectedDisease}
             onSelectTopic={(topicId) => setSelectedDisease(topicId)}
