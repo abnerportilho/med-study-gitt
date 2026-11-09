@@ -29,7 +29,8 @@ import {
   LayoutGrid,
   List,
   ChevronDown,
-  Sun
+  Sun,
+  ClipboardList
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -180,6 +181,28 @@ export default function HubPortalMain({
         'Orientações sobre calçados adequados e meias de algodão',
         'Sinais de alarme: calos, bolhas, perda de sensibilidade ou fissuras'
       ]
+    },
+    {
+      id: 'amamentacao-guia',
+      title: 'Guia de Amamentação: Pega Correta, Fissuras e Cuidados',
+      subtitle: 'Técnica de pega profunda ("boca de peixinho"), prevenção de fissuras, banho de sol e hidratação.',
+      specialtyId: 'pediatria',
+      specialtyName: 'Pediatria & Puericultura',
+      diseaseId: 'amamentacao-guia',
+      icon: Baby,
+      badge: 'Disponível Agora • Imprimível A4',
+      status: 'disponivel',
+      tags: ['Amamentação', 'Pega Correta', 'Fissuras Mamárias', 'Banho de Sol', 'Hidratação', 'Impressão A4'],
+      description: 'Guia ilustrado de cuidados na amamentação para puérperas: técnica de pega profunda, alívio de dor e fissuras, hidratação materna, banho de sol e mitos/o que nunca fazer na amamentação.',
+      targetAudience: 'Paciente e Familiar',
+      paperFormat: 'A4 Retrato',
+      features: [
+        'Critérios visuais da pega correta (lábios evertidos, queixo na mama, boca de peixinho)',
+        'Manejo de fissuras mamárias com o próprio leite materno cicatrizante',
+        'Técnica para quebrar o vácuo com o dedo mindinho antes de soltar o bico',
+        'Orientações de hidratação materna e banho de sol matinal para proteção da pele',
+        'Sinais de mastite ou alarme e mitos contraindicados (sem buchas, sem compressa quente no ingurgitamento)'
+      ]
     }
   ], []);
 
@@ -295,6 +318,13 @@ export default function HubPortalMain({
             <Pill size={14} />
             Medicamentos & Interações
           </button>
+          <button
+            onClick={() => onNavigateToSpecialty('modelos-consulta')}
+            className="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-ink-muted hover:text-cyan-400"
+          >
+            <ClipboardList size={14} />
+            Modelos de Consulta
+          </button>
         </div>
       </div>
 
@@ -318,8 +348,8 @@ export default function HubPortalMain({
             <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-blue-500/10 to-transparent pointer-events-none" />
           </div>
 
-          {/* THREE PRIMARY PATHS: RESUMOS CLÍNICOS vs FICHAS A4 vs MEDICAMENTOS */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* PRIMARY PATHS: RESUMOS CLÍNICOS vs FICHAS A4 vs MEDICAMENTOS vs MODELOS DE CONSULTA */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {/* OPTION 1: RESUMOS CLÍNICOS */}
             <div 
               onClick={() => setCurrentMode('resumos')}
@@ -445,6 +475,45 @@ export default function HubPortalMain({
 
               <div className="pt-4 border-t border-line/60 flex items-center justify-between text-purple-400 font-bold text-xs group-hover:translate-x-1 transition-transform">
                 <span>Acessar Guia de Medicamentos</span>
+                <ArrowRight size={16} />
+              </div>
+            </div>
+
+            {/* OPTION 4: MODELOS DE CONSULTA (COPIA & COLA) */}
+            <div 
+              onClick={() => onNavigateToSpecialty('modelos-consulta')}
+              className="group cursor-pointer rounded-2xl bg-card border border-line hover:border-cyan-500/50 p-6 flex flex-col justify-between transition-all hover:shadow-2xl hover:shadow-cyan-500/10 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl group-hover:bg-cyan-500/15 transition-all" />
+              
+              <div>
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <div className="w-13 h-13 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 group-hover:bg-cyan-600 group-hover:text-white transition-all shadow-md">
+                    <ClipboardList size={26} />
+                  </div>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5">
+                    <Sparkles size={12} />
+                    Copia & Cola PEP
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-bold text-brand-navy mb-2 group-hover:text-cyan-400 transition-colors">
+                  Modelos de Consulta (PEP)
+                </h3>
+                <p className="text-ink-muted text-xs leading-relaxed mb-4">
+                  Prontuários estruturados de rotina para Pediatria (Puericultura completa) e Adolescentes (Método HEEADSSS). Escreva livremente sem salvar e copie com 1 clique para o seu PEP.
+                </p>
+
+                {/* Badges preview */}
+                <div className="flex flex-wrap gap-1.5 mb-6 text-[11px]">
+                  <span className="px-2 py-0.5 rounded-md bg-bg text-ink-muted border border-line/60 font-medium">Puericultura 0-10a</span>
+                  <span className="px-2 py-0.5 rounded-md bg-bg text-ink-muted border border-line/60 font-medium">HEEADSSS Adolescente</span>
+                  <span className="px-2 py-0.5 rounded-md bg-bg text-ink-muted border border-line/60 font-medium">1-Click Clipboard</span>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-line/60 flex items-center justify-between text-cyan-400 font-bold text-xs group-hover:translate-x-1 transition-transform">
+                <span>Abrir Modelos de Consulta</span>
                 <ArrowRight size={16} />
               </div>
             </div>

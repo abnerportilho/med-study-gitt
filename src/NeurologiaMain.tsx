@@ -5,12 +5,14 @@ import {
   Zap, 
   Clock, 
   GitFork, 
-  Calculator
+  Calculator,
+  Stethoscope
 } from 'lucide-react';
 import NeuroHSE from './components/neurologia/NeuroHSE';
 import NeuroEpilepsiaEME from './components/neurologia/NeuroEpilepsiaEME';
 import { NeuroDiagnosticoDiferencial } from './components/neurologia/NeuroDiagnosticoDiferencial';
 import NeuroCalculadoras from './components/neurologia/NeuroCalculadoras';
+import NeuroSemiologia from './components/neurologia/NeuroSemiologia';
 
 export interface NeurologiaMainProps {
   key?: React.Key;
@@ -26,6 +28,14 @@ const TOPIC_CONFIG: Record<string, {
   icon: React.ComponentType<{ className?: string }>;
   accentColor: string;
 }> = {
+  'semiologia-neuro': {
+    title: 'Semiologia Neurológica (Guia Sistematizado)',
+    subtitle: 'Raciocínio anátomo-clínico, NMS vs NMI, miótomos e MRC, pesquisa de déficit motor sutil, tônus e marchas, cerebelo, reflexos, sensibilidade somática, pares cranianos I ao XII e afasias.',
+    badge: 'Exame Clínico & Topografia ABN',
+    tag: 'UNIP Sorocaba · Tratado ABN · 10 Capítulos',
+    icon: Stethoscope,
+    accentColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20'
+  },
   'hse': {
     title: 'Encefalite Herpética (HSE)',
     subtitle: 'Fisiopatologia límbica poupando núcleos da base, genética TLR3, falso-negativo de PCR < 72h, regra de ouro do aciclovir e atualização do ensaio DexEnceph (Lancet Neurol 2026).',
@@ -61,10 +71,13 @@ const TOPIC_CONFIG: Record<string, {
 };
 
 export const NeurologiaMain: React.FC<NeurologiaMainProps> = ({ 
-  initialTopic = 'hse'
+  initialTopic = 'semiologia-neuro'
 }) => {
   // Normalize topic ID
   const activeTopicKey = React.useMemo(() => {
+    if (initialTopic === 'semiologia' || initialTopic === 'semiologia-neuro' || initialTopic === 'exame-neurologico') {
+      return 'semiologia-neuro';
+    }
     if (initialTopic === 'epilepsia' || initialTopic === 'estado-de-mal' || initialTopic === 'eme' || initialTopic === 'epilepsia-eme') {
       return 'epilepsia-eme';
     }
@@ -74,15 +87,18 @@ export const NeurologiaMain: React.FC<NeurologiaMainProps> = ({
     if (initialTopic === 'calculadoras-neuro' || initialTopic === 'calculadoras') {
       return 'calculadoras-neuro';
     }
-    return 'hse';
+    if (initialTopic === 'hse') {
+      return 'hse';
+    }
+    return 'semiologia-neuro';
   }, [initialTopic]);
 
-  const currentTopic = TOPIC_CONFIG[activeTopicKey] || TOPIC_CONFIG['hse'];
+  const currentTopic = TOPIC_CONFIG[activeTopicKey] || TOPIC_CONFIG['semiologia-neuro'];
   const IconComponent = currentTopic.icon;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Header Banner - Focused specifically on the current active topic, without horizontal menu buttons */}
+      {/* Header Banner - Focused specifically on the current active topic */}
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -90,7 +106,7 @@ export const NeurologiaMain: React.FC<NeurologiaMainProps> = ({
               <div className="flex flex-wrap items-center gap-2 mb-1.5">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center gap-1.5">
                   <Brain className="w-3.5 h-3.5 text-indigo-400" />
-                  Neurologia Clínica & Urgências
+                  Neurologia Clínica & Semiologia Sistematizada
                 </span>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border flex items-center gap-1 ${currentTopic.accentColor}`}>
                   <IconComponent className="w-3 h-3" />
@@ -115,6 +131,7 @@ export const NeurologiaMain: React.FC<NeurologiaMainProps> = ({
 
       {/* Main Content Area: Renders ONLY the chosen standalone topic */}
       <main className="flex-1 max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 w-full">
+        {activeTopicKey === 'semiologia-neuro' && <NeuroSemiologia />}
         {activeTopicKey === 'hse' && <NeuroHSE />}
         {activeTopicKey === 'epilepsia-eme' && <NeuroEpilepsiaEME />}
         {activeTopicKey === 'crise-vs-sincope' && <NeuroDiagnosticoDiferencial />}
@@ -126,10 +143,10 @@ export const NeurologiaMain: React.FC<NeurologiaMainProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <Brain className="w-4 h-4 text-indigo-400" />
-            <span>Capítulo: <em>Encefalite Herpética, Epilepsia, Estado de Mal Epiléptico e Diagnósticos Diferenciais</em> (2026).</span>
+            <span>Capítulo: <em>Semiologia Neurológica Sistematizada & Urgências Neurológicas</em> (UNIP / ABN).</span>
           </div>
           <div className="text-slate-500 font-mono text-[11px]">
-            Diretrizes ILAE 2025 · Ensaio DexEnceph (Lancet Neurol 2026) · ESETT (NEJM) · Escore de Calgary
+            Tratado de Neurologia da ABN (2ª ed.) · Diretrizes ILAE 2025 · Ensaio DexEnceph 2026 · ESETT
           </div>
         </div>
       </footer>

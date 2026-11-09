@@ -7,11 +7,12 @@ import {
   ArrowRightLeft, Zap, ShieldCheck, CornerDownRight, Clock,
   Heart, Droplet, Moon, Sun, Globe, Flame,
   Baby, Syringe, Brain, Dna, Scissors, Calculator, HeartHandshake,
-  X, Filter, FileSearch
+  X, Filter, FileSearch, ClipboardList
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import ModelosConsultaMain from './ModelosConsultaMain';
 import CirurgiaMain from './CirurgiaMain';
 import PreventivaMain from './PreventivaMain';
 import DermatologiaMain from './DermatologiaMain';
@@ -102,6 +103,7 @@ import PreventCalculator from './PreventCalculator';
 import MapaGlicemicoMain from './MapaGlicemicoMain';
 import AsmaPlanoAcaoMain from './AsmaPlanoAcaoMain';
 import PeDiabeticoMain from './PeDiabeticoMain';
+import AmamentacaoGuiaMain from './AmamentacaoGuiaMain';
 import MrpaDiarioMain from './MrpaDiarioMain';
 import HubPortalMain from './HubPortalMain';
 import MedicamentosMain from './MedicamentosMain';
@@ -109,6 +111,7 @@ import RastreadorInteracoesMain from './RastreadorInteracoesMain';
 import ExtratorExamesMain from './ExtratorExamesMain';
 import AsmaClinicaDiagnostico from './AsmaClinicaDiagnostico';
 import { DRUGS_DATABASE, DrugItem } from './data/medicamentosData';
+import { MODELOS_CONSULTA } from './data/modelosConsultaData';
 
 // --- Utilities ---
 function cn(...inputs: ClassValue[]) {
@@ -361,6 +364,7 @@ const SPECIALTIES = [
     name: 'Neurologia',
     icon: Brain,
     diseases: [
+      { id: 'semiologia-neuro', name: 'Semiologia Neurológica (Exame Clínico Sistematizado)' },
       { id: 'hse', name: 'Encefalite Herpética (HSE)' },
       { id: 'epilepsia-eme', name: 'Epilepsia & Estado de Mal Epiléptico (EME)' },
       { id: 'crise-vs-sincope', name: 'Crise vs Síncope & CNEP (Diagnóstico Diferencial)' },
@@ -1070,6 +1074,29 @@ export default function App() {
     });
   }, [drugSearchTerm, drugSystemFilter]);
 
+  const [selectedConsultaModelId, setSelectedConsultaModelId] = useState<string>('pediatria');
+  const [consultaSearchTerm, setConsultaSearchTerm] = useState<string>('');
+  const [consultaCategoryFilter, setConsultaCategoryFilter] = useState<string>('todos');
+
+  const filteredConsultaModels = React.useMemo(() => {
+    return MODELOS_CONSULTA.filter(model => {
+      const q = consultaSearchTerm.toLowerCase().trim();
+      const matchesSearch = 
+        !q ||
+        model.title.toLowerCase().includes(q) ||
+        model.shortTitle.toLowerCase().includes(q) ||
+        model.description.toLowerCase().includes(q) ||
+        model.tags.some(t => t.toLowerCase().includes(q)) ||
+        model.badge.toLowerCase().includes(q);
+
+      const matchesCat = 
+        consultaCategoryFilter === 'todos' ? true :
+        model.category === consultaCategoryFilter;
+
+      return matchesSearch && matchesCat;
+    });
+  }, [consultaSearchTerm, consultaCategoryFilter]);
+
   React.useEffect(() => {
     document.documentElement.classList.add('dark');
   }, []);
@@ -1197,6 +1224,26 @@ export default function App() {
             Extrator de Exames (PDF → prontuário)
           </div>
         </button>
+
+        {/* Modelos de Consulta (Copia & Cola para Prontuário) */}
+        <button
+          onClick={() => {
+            setSelectedSpecialty('modelos-consulta');
+            setIsSidebarCollapsed(false);
+          }}
+          className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center transition-all relative group mb-2 cursor-pointer",
+            selectedSpecialty === 'modelos-consulta' 
+              ? "bg-cyan-600 text-white shadow-md ring-2 ring-cyan-400/40" 
+              : "text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
+          )}
+        >
+          <ClipboardList size={24} />
+          {/* Tooltip */}
+          <div className="absolute left-full ml-4 px-3 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">
+            Modelos de Consulta (Copia & Cola PEP)
+          </div>
+        </button>
         
         <div 
           id="specialties-scroll-container"
@@ -1230,21 +1277,31 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Secondary Sidebar (Diseases or Drug Study Panel) */}
+      {/* Secondary Sidebar (Diseases, Drug Study Panel, or Consultation Models) */}
       <aside 
         className={cn(
           "bg-card border-r border-line py-5 flex flex-col sticky top-0 z-40 transition-all duration-300 ease-in-out shrink-0 relative h-[100dvh]",
           (isSidebarCollapsed || selectedSpecialty === 'search' || selectedSpecialty === 'hub' || selectedSpecialty === 'orientacoes' || selectedSpecialty === 'rastreador' || selectedSpecialty === 'extrator') 
             ? "w-0 p-0 overflow-hidden border-none" 
-            : selectedSpecialty === 'medicamentos'
+            : (selectedSpecialty === 'medicamentos' || selectedSpecialty === 'modelos-consulta')
               ? "w-80 md:w-88 px-3"
               : "w-64 px-4 gap-6"
         )}
       >
+        {/* Seta no canto superior direito para recolher/esconder a barra lateral */}
+        <button
+          onClick={() => setIsSidebarCollapsed(true)}
+          title="Recolher menu lateral"
+          aria-label="Recolher menu lateral"
+          className="absolute top-3.5 right-2.5 z-50 p-1.5 rounded-lg bg-bg/80 hover:bg-bg border border-line hover:border-slate-400 text-ink-muted hover:text-brand-navy transition-all shadow-xs cursor-pointer group"
+        >
+          <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+        </button>
+
         {selectedSpecialty === 'medicamentos' ? (
           <div className="flex flex-col h-full gap-3 overflow-hidden">
             {/* Header of Drug Study Panel */}
-            <div className="flex items-center justify-between px-1 shrink-0">
+            <div className="flex items-center justify-between px-1 pr-8 shrink-0">
               <div className="flex items-center gap-2">
                 <span className="p-1.5 rounded-lg bg-purple-500/15 text-purple-400 border border-purple-500/30">
                   <Pill size={18} />
@@ -1410,10 +1467,157 @@ export default function App() {
               <span className="font-mono text-purple-400 font-bold">Resumo Clínico</span>
             </div>
           </div>
+        ) : selectedSpecialty === 'modelos-consulta' ? (
+          <div className="flex flex-col h-full gap-3 overflow-hidden">
+            {/* Header of Modelos de Consulta Sidebar */}
+            <div className="flex items-center justify-between px-1 pr-8 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+                  <ClipboardList size={18} />
+                </span>
+                <div>
+                  <h2 className="font-extrabold text-sm tracking-tight text-brand-navy leading-none">
+                    Modelos de Consulta
+                  </h2>
+                  <p className="text-[10px] text-ink-muted mt-0.5">
+                    Copia & Cola para Prontuário
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 font-bold border border-cyan-500/30">
+                {filteredConsultaModels.length}
+              </span>
+            </div>
+
+            {/* Quick Search */}
+            <div className="relative px-1 shrink-0">
+              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
+              <input 
+                type="text"
+                placeholder="Buscar modelo de consulta..."
+                value={consultaSearchTerm}
+                onChange={(e) => setConsultaSearchTerm(e.target.value)}
+                className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-bg border border-line focus:outline-none focus:border-cyan-500 text-brand-navy placeholder:text-ink-muted/70 transition-all"
+              />
+              {consultaSearchTerm && (
+                <button 
+                  onClick={() => setConsultaSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-brand-navy cursor-pointer"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 px-1 shrink-0">
+              {[
+                { id: 'todos', label: 'Todos (3)' },
+                { id: 'clinica', label: '🩺 Clínica Médica' },
+                { id: 'pediatria', label: '👶 Puericultura' },
+                { id: 'adolescentes', label: '🧑 Hebiatria' }
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setConsultaCategoryFilter(f.id)}
+                  className={cn(
+                    "text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0 transition-all cursor-pointer whitespace-nowrap",
+                    consultaCategoryFilter === f.id
+                      ? "bg-cyan-600 text-white shadow-sm"
+                      : "bg-bg text-ink-muted hover:text-brand-navy border border-line"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Consultation Models List */}
+            <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 px-1 py-1">
+              {filteredConsultaModels.length === 0 ? (
+                <div className="p-4 text-center text-ink-muted text-xs bg-bg/50 rounded-xl border border-line">
+                  Nenhum modelo encontrado para esta busca.
+                </div>
+              ) : (
+                filteredConsultaModels.map((model) => {
+                  const isSelected = selectedConsultaModelId === model.id;
+                  return (
+                    <button
+                      key={model.id}
+                      onClick={() => {
+                        setSelectedConsultaModelId(model.id);
+                      }}
+                      className={cn(
+                        "w-full text-left p-3 rounded-xl border transition-all relative flex flex-col gap-1.5 cursor-pointer group select-none shadow-sm",
+                        isSelected 
+                          ? "bg-cyan-500/15 border-cyan-500 ring-1 ring-cyan-500/40 shadow-cyan-500/10" 
+                          : "bg-card hover:bg-bg/90 border-line hover:border-slate-400/40 text-ink"
+                      )}
+                    >
+                      {/* Left accent bar for active item */}
+                      {isSelected && (
+                        <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-cyan-500" />
+                      )}
+
+                      <div className="flex items-start justify-between gap-1.5 pl-1.5">
+                        <div className="min-w-0">
+                          <h4 className={cn(
+                            "font-bold text-xs truncate tracking-tight",
+                            isSelected ? "text-cyan-300 font-extrabold" : "text-brand-navy group-hover:text-cyan-400"
+                          )}>
+                            {model.shortTitle}
+                          </h4>
+                          <p className="text-[10px] text-ink-muted line-clamp-1">
+                            {model.badge}
+                          </p>
+                        </div>
+                        
+                        {/* Category Badge */}
+                        <span className={cn(
+                          "text-[9px] font-mono px-1.5 py-0.5 rounded shrink-0 font-semibold",
+                          model.id === 'pediatria' ? "bg-amber-500/15 text-amber-300 border border-amber-500/20" :
+                          model.id === 'adolescentes' ? "bg-purple-500/15 text-purple-300 border border-purple-500/20" :
+                          "bg-blue-500/15 text-blue-300 border border-blue-500/20"
+                        )}>
+                          {model.id === 'pediatria' ? '0 a 10 anos' : model.id === 'adolescentes' ? 'Adolescente' : 'Adulto Geral'}
+                        </span>
+                      </div>
+
+                      {/* Description preview */}
+                      <p className="pl-1.5 text-[10px] text-ink-muted/80 line-clamp-2 leading-relaxed">
+                        {model.description}
+                      </p>
+
+                      {/* Tags & Active indicator */}
+                      <div className="flex flex-wrap items-center gap-1 pl-1.5 pt-0.5">
+                        {model.tags.slice(0, 3).map((t, idx) => (
+                          <span key={idx} className="text-[9px] px-1.5 py-0.2 rounded bg-bg text-ink-muted border border-line font-medium">
+                            {t}
+                          </span>
+                        ))}
+                        {isSelected && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/25 text-cyan-200 border border-cyan-500/40 ml-auto font-bold flex items-center gap-1">
+                            <CheckCircle2 size={10} />
+                            Selecionado
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Bottom Indicator */}
+            <div className="pt-2 border-t border-line/60 px-1 shrink-0 flex items-center justify-between text-[11px] text-ink-muted">
+              <span>Selecione para editar</span>
+              <span className="font-mono text-cyan-400 font-bold">Prontuário Ágil</span>
+            </div>
+          </div>
         ) : (
           <>
-            <div className="flex items-center justify-between px-2">
-              <span className="font-bold text-lg tracking-tight text-brand-navy whitespace-nowrap">
+            <div className="flex items-center justify-between px-2 pr-8">
+              <span className="font-bold text-lg tracking-tight text-brand-navy whitespace-nowrap truncate">
                 {SPECIALTIES.find(s => s.id === selectedSpecialty)?.name}
               </span>
             </div>
@@ -1476,24 +1680,30 @@ export default function App() {
             title={
               selectedSpecialty === 'medicamentos'
                 ? (isSidebarCollapsed ? "Abrir painel lateral de drogas para estudo" : "Recolher painel lateral de drogas")
-                : (isSidebarCollapsed ? "Expandir menu lateral" : "Recolher menu lateral")
+                : selectedSpecialty === 'modelos-consulta'
+                  ? (isSidebarCollapsed ? "Abrir barra lateral de modelos de consulta" : "Recolher barra lateral de modelos de consulta")
+                  : (isSidebarCollapsed ? "Expandir menu lateral" : "Recolher menu lateral")
             }
             className={cn(
               "p-2 rounded-xl border border-line hover:bg-card text-brand-navy shadow-lg transition-all absolute bg-card flex items-center justify-center group z-50 cursor-pointer backdrop-blur-sm",
               isSidebarCollapsed 
-                ? (selectedSpecialty === 'medicamentos' ? "left-4 ring-2 ring-purple-500/50 shadow-purple-500/20" : "left-4 ring-2 ring-blue-500/30") 
+                ? (selectedSpecialty === 'medicamentos' 
+                    ? "left-4 ring-2 ring-purple-500/50 shadow-purple-500/20" 
+                    : selectedSpecialty === 'modelos-consulta'
+                      ? "left-4 ring-2 ring-cyan-500/50 shadow-cyan-500/20"
+                      : "left-4 ring-2 ring-blue-500/30") 
                 : "-left-4 hover:border-slate-400"
             )}
           >
             {isSidebarCollapsed ? (
               <ChevronRight size={18} className={cn(
                 "group-hover:translate-x-0.5 transition-transform",
-                selectedSpecialty === 'medicamentos' ? "text-purple-400" : "text-brand-blue"
+                selectedSpecialty === 'medicamentos' ? "text-purple-400" : selectedSpecialty === 'modelos-consulta' ? "text-cyan-400" : "text-brand-blue"
               )} />
             ) : (
               <ChevronLeft size={18} className={cn(
                 "group-hover:-translate-x-0.5 transition-transform",
-                selectedSpecialty === 'medicamentos' ? "text-purple-400" : "text-brand-blue"
+                selectedSpecialty === 'medicamentos' ? "text-purple-400" : selectedSpecialty === 'modelos-consulta' ? "text-cyan-400" : "text-brand-blue"
               )} />
             )}
           </button>
@@ -1552,6 +1762,11 @@ export default function App() {
               }
             }}
           />
+        ) : selectedSpecialty === 'modelos-consulta' ? (
+          <ModelosConsultaMain 
+            selectedModelId={selectedConsultaModelId}
+            onSelectModel={(id) => setSelectedConsultaModelId(id)}
+          />
         ) : selectedSpecialty === 'rastreador' ? (
           <RastreadorInteracoesMain />
         ) : selectedSpecialty === 'extrator' ? (
@@ -1601,6 +1816,8 @@ export default function App() {
           <AsmaPlanoAcaoMain />
         ) : selectedDisease === 'pe-diabetico' ? (
           <PeDiabeticoMain />
+        ) : selectedDisease === 'amamentacao-guia' ? (
+          <AmamentacaoGuiaMain />
         ) : selectedDisease === 'dislipidemias' ? (
           <DislipidemiaMain />
         ) : selectedDisease === 'diabetes-gestacional' ? (
