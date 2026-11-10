@@ -1,0 +1,959 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Circuito Motor dos Núcleos da Base</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: palco 3D à esquerda, painel de instrumentos à direita; empilha no celular. Tema escuro único, escolhido para leitura dos fluxos. */
+:root{
+  --bg:#080B11;
+  --stage:#06090E;
+  --panel:#0D131D;
+  --line:#1C2736;
+  --fg:#DCE5F0;
+  --muted:#8494AA;
+  --glu:#4FD8FF;
+  --gaba:#FF4F64;
+  --da:#FFC64D;
+  --ok:#5BE0A0;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+*{box-sizing:border-box}
+body{
+  background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px;
+}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 370px;grid-template-rows:auto minmax(0,1fr);gap:12px;height:100%}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px}
+h1{font-family:var(--f-display);font-stretch:85%;font-weight:750;font-size:clamp(20px,2.4vw,28px);margin:0;line-height:1.05;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px;margin:4px 0 0;max-width:68ch}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--panel)}
+.seg button{all:unset;cursor:pointer;font-family:var(--f-display);font-stretch:90%;font-weight:650;font-size:13px;padding:7px 15px;border-radius:999px;color:var(--muted);letter-spacing:.02em}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg button[data-mode="pd"][aria-pressed="true"]{background:var(--gaba);color:#1a0610}
+.seg button:focus-visible,.chip:focus-visible,.btn:focus-visible,input:focus-visible{outline:2px solid var(--da);outline-offset:2px}
+
+.stage{position:relative;min-width:0;min-height:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--stage)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.labels{position:absolute;inset:0;pointer-events:none}
+.lbl,.blbl,.sgn,.ttl{pointer-events:none}
+.lbl span{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.01em;color:var(--fg);background:rgba(7,10,16,.86);border:1px solid var(--line);border-left:3px solid var(--c,#fff);padding:1px 7px;border-radius:4px;white-space:nowrap;transition:opacity .25s}
+.blbl span{display:block;font-family:var(--f-display);font-stretch:95%;font-weight:800;font-size:13.5px;letter-spacing:.08em;line-height:1.15;color:#000;background:transparent;border:0;padding:0;white-space:nowrap;text-align:center;transition:opacity .25s}
+.blbl small{display:block;font-family:var(--f-mono);font-weight:600;font-size:9.5px;letter-spacing:.02em;color:#000}
+.blbl:not(.dim) span{opacity:1}
+.blbl.out span{color:var(--fg);background:transparent;border:0;box-shadow:none;letter-spacing:.12em;text-transform:uppercase;font-size:11.5px}
+.blbl.dim span{opacity:.45}
+.blbl.light span,.blbl.light small{color:#fff}
+.lbl{display:flex;align-items:center;gap:4px}
+.bd{display:inline-block;font-family:var(--f-mono);font-weight:700;font-size:13px;line-height:1;padding:4px 7px;border-radius:5px;color:#fff;border:1.5px solid #000;white-space:nowrap;box-shadow:0 0 0 1px rgba(255,255,255,.35)}
+.bd.up{background:#E8364F}.bd.dn{background:#2F6BFF}
+.bdw{pointer-events:none}
+.bd[hidden]{display:none}
+.legend .bd{font-size:10px;padding:2px 5px;margin-right:4px}
+.stage.cmp .blbl span{font-size:10.5px;letter-spacing:.02em}
+.stage.cmp .blbl small{font-size:8.5px}
+.stage.cmp .lbl span{font-size:10px}
+.stage.cmp .bd{font-size:11.5px;padding:3px 5px}
+.sgn span{display:block;font-family:var(--f-mono);font-weight:700;font-size:15px;line-height:1;width:21px;height:21px;display:grid;place-items:center;border-radius:50%;background:#000;border:2px solid currentColor;transition:opacity .25s}
+.ttl span{display:block;font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:17px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+.dim span{opacity:.22}
+.caption{position:absolute;left:12px;top:12px;right:12px;max-width:520px;pointer-events:none}
+.step{background:rgba(7,10,16,.86);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.4}
+.step b{font-family:var(--f-display);font-stretch:90%;font-weight:700;letter-spacing:.02em;margin-right:6px}
+.step .slow{display:block;color:var(--muted);font-family:var(--f-mono);font-size:10.5px;margin-top:2px}
+.legend{position:absolute;left:12px;bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;max-width:calc(100% - 300px)!important;background:rgba(7,10,16,.86);border:1px solid var(--line);border-radius:10px;padding:7px 11px;font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
+@media (max-width:880px){.legend{max-width:calc(100% - 24px)!important}}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.hint{position:absolute;right:12px;bottom:12px;font-family:var(--f-mono);font-size:10.5px;color:var(--muted);background:rgba(7,10,16,.86);border:1px solid var(--line);border-radius:8px;padding:5px 9px}
+.fail{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+
+.panel{min-width:0;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:4px 16px 16px}
+.sec{padding:14px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.sec:last-child{border-bottom:0}
+h2{font-family:var(--f-display);font-stretch:80%;font-weight:700;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.chip{all:unset;cursor:pointer;font-size:12.5px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;color:var(--fg)}
+.chip[aria-pressed="true"]{border-color:var(--da);color:var(--da);background:rgba(255,198,77,.08)}
+.btn{all:unset;cursor:pointer;text-align:center;font-family:var(--f-display);font-stretch:90%;font-weight:700;font-size:14px;letter-spacing:.02em;padding:10px 14px;border-radius:10px;background:var(--glu);color:#021018}
+.slider{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.slider label{font-size:13px}
+.slider output{font-family:var(--f-mono);font-size:12px;color:var(--da);font-variant-numeric:tabular-nums}
+.slider input{grid-column:1/-1;width:100%;accent-color:var(--da)}
+.slider small{grid-column:1/-1;color:var(--muted);font-size:11.5px}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.check input{accent-color:var(--da);width:15px;height:15px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12px}
+.keys span{display:flex;align-items:center;gap:7px}
+.keys i{width:11px;height:11px;border-radius:3px;flex:none}
+
+.bars{display:flex;flex-direction:column;gap:7px}
+.bar{display:grid;grid-template-columns:92px minmax(0,1fr) 38px;align-items:center;gap:8px;font-size:12px}
+.bar span:first-child{color:var(--muted)}
+.track{position:relative;height:8px;border-radius:4px;background:#141D2A}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;width:0}
+.ref{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);opacity:.55;border-radius:1px}
+.val{font-family:var(--f-mono);font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
+.note{color:var(--muted);font-size:11.5px;margin:0}
+.meter{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:baseline}
+.big{font-family:var(--f-display);font-stretch:85%;font-weight:750;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.meter .lab{font-size:12px;color:var(--muted)}
+#scope{width:100%;height:110px;display:block;border-radius:8px;background:#060A11;border:1px solid var(--line)}
+.scoperow{display:flex;justify-content:space-between;gap:8px;font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
+.card h3{font-family:var(--f-display);font-stretch:90%;font-weight:750;font-size:17px;margin:0}
+.card .nt{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin:2px 0 8px}
+.card dl{margin:0;display:grid;gap:6px}
+.card dt{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card dd{margin:0;font-size:13px}
+.clin{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.clin li::marker{color:var(--da)}
+.src{margin:0;padding-left:18px;font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.src a{color:var(--glu);text-decoration:none}
+.src a:hover{text-decoration:underline}
+
+@media (max-width:880px){
+  html,body{height:auto}
+  .app{grid-template-columns:1fr;grid-template-rows:auto auto auto;height:auto}
+  .stage{height:64vh;min-height:380px}
+  .panel{overflow:visible}
+  .caption{max-width:none}
+  .hint{display:none}
+}
+</style>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>Circuito motor dos núcleos da base</h1>
+      <p class="sub">Vias direta, indireta e hiperdireta, modulação dopaminérgica D1/D2 e o que muda quando a SNc degenera. Veja em forma realista ou esquemática, isolado ou comparando normal e Parkinson.</p>
+    </div>
+    <div class="ctrls">
+      <div class="seg" role="group" aria-label="Forma de visualização">
+        <button type="button" data-view="real" aria-pressed="true">Realista</button>
+        <button type="button" data-view="esq" aria-pressed="false">Esquemático</button>
+      </div>
+      <div class="seg" role="group" aria-label="Estado do circuito">
+        <button type="button" id="mNormal" data-mode="normal" aria-pressed="true">Normal</button>
+        <button type="button" id="mPD" data-mode="pd" aria-pressed="false">Parkinson</button>
+        <button type="button" id="mCmp" data-mode="cmp" aria-pressed="false">Lado a lado</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+    <div class="caption" aria-live="polite"><div class="step" id="step"><b>Repouso</b>GPi/SNr inibem o tálamo de forma tônica.</div></div>
+    <div class="legend">
+      <span><i style="background:var(--glu)"></i>glutamato (+)</span>
+      <span><i style="background:repeating-linear-gradient(90deg,var(--gaba) 0 5px,transparent 5px 8px)"></i>GABA (−)</span>
+      <span><i style="background:repeating-linear-gradient(90deg,var(--da) 0 2px,transparent 2px 5px)"></i>dopamina</span>
+      <span><b class="bd up">↑</b>mais ativo que o normal</span>
+      <span><b class="bd dn">↓</b>menos ativo</span>
+      <span>espessura da via = intensidade</span>
+    </div>
+    <div class="hint">arraste para girar · toque numa estrutura</div>
+  </div>
+
+  <aside class="panel">
+    <section class="sec">
+      <h2>Comando motor</h2>
+      <button type="button" class="btn" id="fire">Disparar comando motor</button>
+      <label class="check"><input type="checkbox" id="loop" checked> Repetir a cada 5 s</label>
+    </section>
+
+    <section class="sec">
+      <h2>Dopamina e intervenções</h2>
+      <div class="slider">
+        <label for="dopa">Neurônios da SNc preservados</label><output id="dopaOut">100%</output>
+        <input type="range" id="dopa" min="10" max="100" value="100" step="1">
+        <small>Na forma realista, os pontos dourados da substância negra somem conforme a degeneração avança.</small>
+      </div>
+      <div class="row">
+        <button type="button" class="chip" id="ldopa" aria-pressed="false">Levodopa</button>
+        <button type="button" class="chip" id="dbs" aria-pressed="false">DBS do STN</button>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>Destacar via</h2>
+      <div class="row" id="paths">
+        <button type="button" class="chip" data-p="todas" aria-pressed="true">Todas</button>
+        <button type="button" class="chip" data-p="direta" aria-pressed="false">Direta</button>
+        <button type="button" class="chip" data-p="indireta" aria-pressed="false">Indireta</button>
+        <button type="button" class="chip" data-p="hiper" aria-pressed="false">Hiperdireta</button>
+        <button type="button" class="chip" data-p="nigro" aria-pressed="false">Nigroestriatal</button>
+        <button type="button" class="chip" data-p="tremor" aria-pressed="false">Tremor</button>
+      </div>
+      <div class="grid2">
+        <label class="check"><input type="checkbox" id="beta" checked> Oscilação beta</label>
+        <label class="check"><input type="checkbox" id="tremor"> Circuito do tremor</label>
+        <label class="check"><input type="checkbox" id="labels" checked> Rótulos</label>
+        <label class="check"><input type="checkbox" id="spin"> Girar sozinho</label>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>Cores das estruturas</h2>
+      <div class="keys" id="keys"></div>
+    </section>
+
+    <section class="sec">
+      <h2>Atividade relativa</h2>
+      <div class="bars" id="bars"></div>
+      <p class="note">Unidades arbitrárias, estado do controle de dopamina. O traço branco marca o repouso no circuito normal.</p>
+    </section>
+
+    <section class="sec">
+      <h2>Saída motora</h2>
+      <div class="meter">
+        <span class="big" id="gain">100%</span><span class="lab">ganho do último comando, comparado ao normal</span>
+        <span class="big" id="trem" style="font-size:20px">0.0</span><span class="lab">amplitude do tremor de repouso (0 a 10)</span>
+      </div>
+      <svg viewBox="0 0 240 64" width="100%" height="64" role="img" aria-label="Mão em repouso alternando flexão e extensão conforme a alça do tremor oscila">
+        <rect x="24" y="26" width="120" height="16" rx="6" fill="#1C2736" stroke="#8494AA" stroke-width="1"/>
+        <g id="handG" transform="rotate(0 144 34)"><rect x="144" y="22" width="56" height="24" rx="10" fill="#8796AE" stroke="#DCE5F0" stroke-width="1"/></g>
+        <text x="24" y="58" fill="#8494AA" font-size="10" font-family="IBM Plex Mono,monospace">mão em repouso · câmera lenta (real: 4 a 6 Hz)</text>
+      </svg>
+    </section>
+
+    <section class="sec">
+      <h2>LFP do STN</h2>
+      <canvas id="scope" aria-label="Traçado simulado do potencial de campo local do núcleo subtalâmico"></canvas>
+      <div class="scoperow"><span>1 s de traçado · simulação qualitativa</span><span id="betaPow">beta: baixa</span></div>
+    </section>
+
+    <section class="sec card" id="card"></section>
+
+    <section class="sec">
+      <h2>Leitura clínica</h2>
+      <ul class="clin" id="clin"></ul>
+    </section>
+
+    <section class="sec">
+      <h2>Fontes do modelo</h2>
+      <ol class="src">
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3136734" target="_blank" rel="noopener">Obeso & Lanciego, Front Neuroanat 2011</a>: modelo clássico de taxa e suas revisões</li>
+        <li><a href="https://www.annualreviews.org/content/journals/10.1146/annurev-neuro-072116-031033" target="_blank" rel="noopener">Klaus, Alves da Silva & Costa, Annu Rev Neurosci 2019</a>: iniciação do movimento</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4913465" target="_blank" rel="noopener">Cazorla, Kang & Kellendonk 2015</a>: D1/D2 e colaterais de ponte</li>
+        <li><a href="https://dspace.mit.edu/handle/1721.1/163492" target="_blank" rel="noopener">Graybiel, Mov Disord 2025</a>: vias estriossomais não canônicas</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4803022" target="_blank" rel="noopener">van Wijk et al., Clin Neurophysiol 2016</a>: beta no STN e gravidade motora</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6601802" target="_blank" rel="noopener">Dirkx et al., J Neurosci 2016</a> e <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3501966" target="_blank" rel="noopener">Helmich et al., Brain 2012</a>: modelo dimmer-switch do tremor</li>
+        <li><a href="https://doi.org/10.1002/ana.22361" target="_blank" rel="noopener">Helmich et al., Ann Neurol 2011</a>: depleção pálida e gatilho do GPi; conexão com a alça pelo córtex motor</li>
+      </ol>
+      <p class="note">Tempos em câmera lenta. Oscilações visíveis abaixo de 3 Hz por segurança; as frequências reais estão nas legendas. Anatomia estilizada: posições relativas corretas, formas simplificadas.</p>
+    </section>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script>
+(function(){
+"use strict";
+const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const stage = document.getElementById('stage');
+const cl = (x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const V = (x,y,z)=>new THREE.Vector3(x,y||0,z||0);
+
+/* ---------------- Cores por estrutura e por neurotransmissor ---------------- */
+const COL={ctx:0xFF9F7A,str:0x5B7CFA,d1:0x9DB8FF,d2:0x3F5BD9,gpe:0x2EC4A6,gpi:0xA77BFF,snr:0xD17BE0,stn:0xF28B30,thal:0x7FD15A,snc:0xA0703C,vim:0xC8F08F,cereb:0x6FA8C8,pons:0x8796AE,spinal:0x8796AE};
+const NAMES=[['ctx','Córtex motor'],['str','Estriado'],['d1','MSN D1'],['d2','MSN D2'],['gpe','GPe'],['gpi','GPi'],['snr','SNr'],['stn','STN'],['thal','Tálamo VA/VL'],['snc','SNc'],['vim','VIM'],['cereb','Cerebelo']];
+const NT={glu:{c:0x4fd8ff,p:0},gaba:{c:0xff4f64,p:1},da1:{c:0xffc64d,p:2},da2:{c:0xffc64d,p:2}};
+const hex=c=>'#'+c.toString(16).padStart(6,'0');
+
+/* ---------------- Conteúdo didático ---------------- */
+const INFO = {
+  ctx:{t:'Córtex motor, pré-motor e AMS',nt:'Glutamato · tratos corticoespinhal e corticoestriatal',
+    n:'Envia o plano motor ao estriado (vias direta e indireta) e diretamente ao STN (hiperdireta). Recebe de volta a excitação do tálamo VA/VL, que amplifica o comando.',
+    p:'Recebe pouca excitação talâmica: o comando sai fraco e lento. Clinicamente: bradicinesia com decremento, hipomimia, hipofonia e micrografia.'},
+  str:{t:'Estriado (putâmen e caudado)',nt:'GABA · MSN são cerca de 95% dos neurônios estriatais',
+    n:'Principal porta de entrada dos núcleos da base. Integra o córtex e a dopamina da SNc. Interneurônios colinérgicos se opõem à dopamina.',
+    p:'O putâmen posterior (motor) perde dopamina primeiro, o que ajuda a explicar o início motor e assimétrico. Desequilíbrio a favor da via indireta.'},
+  d1:{t:'MSN D1 · via direta',nt:'GABA + substância P + dinorfina · D1 acoplado a Gs/olf (↑AMPc)',
+    n:'A dopamina aumenta a excitabilidade. Inibem GPi/SNr e desinibem o tálamo: é o acelerador.',
+    p:'Sem dopamina, respondem pouco ao córtex. GPi/SNr deixam de ser silenciados durante o comando.'},
+  d2:{t:'MSN D2 · via indireta',nt:'GABA + encefalina · D2 acoplado a Gi (↓AMPc) · receptores A2A',
+    n:'A dopamina reduz a excitabilidade. Inibem o GPe e, ao fim da cadeia, aumentam a saída do GPi: é o freio.',
+    p:'Livres da inibição dopaminérgica, ficam hiperativos. Antagonistas A2A (istradefilina) atuam aqui como adjuvantes.'},
+  gpe:{t:'Globo pálido externo (GPe)',nt:'GABA',
+    n:'Inibe tonicamente o STN. Hoje é visto como um nó com muitas conexões próprias, não só um relé.',
+    p:'Muito inibido pelas MSN D2, solta o freio sobre o STN. O par GPe e STN pode sustentar oscilação beta.'},
+  stn:{t:'Núcleo subtalâmico (STN)',nt:'Glutamato · único núcleo excitatório intrínseco',
+    n:'Recebe o córtex pela via hiperdireta, mais rápida que as outras. Excita GPi/SNr e funciona como freio rápido para suspender ações em curso.',
+    p:'Hiperativo e sincronizado em beta (13 a 30 Hz). A potência beta correlaciona com bradicinesia e rigidez, não com tremor. Alvo principal de DBS.'},
+  gpi:{t:'Globo pálido interno (GPi)',nt:'GABA · saída tônica para tálamo VA/VL',
+    n:'Mantém o tálamo inibido em repouso. A pausa do GPi durante o comando é o que libera o movimento escolhido.',
+    p:'Hiperativo: o tálamo continua freado mesmo durante o comando. No tremor, ativa de forma transitória no início de cada episódio e funciona como gatilho (interruptor). GPi é o outro alvo de DBS e foi alvo de palidotomia.'},
+  snr:{t:'Substância negra reticulada (SNr)',nt:'GABA · saída para tálamo e tronco',
+    n:'Segunda saída dos núcleos da base, com papel maior em movimentos oculares e axiais.',
+    p:'Comporta-se como o GPi: saída inibitória excessiva.'},
+  snc:{t:'Substância negra compacta (SNc)',nt:'Dopamina · neurônios com neuromelanina',
+    n:'Via nigroestriatal: excita MSN D1 e inibe MSN D2, inclinando o circuito para o movimento.',
+    p:'Degeneração com inclusões de alfa-sinucleína (corpos de Lewy) e despigmentação visível na macroscopia. A levodopa repõe dopamina no estriado, mas não recupera esses neurônios.'},
+  thal:{t:'Tálamo motor (VA/VL)',nt:'Glutamato · projeta ao córtex motor',
+    n:'Quando desinibido, amplifica a atividade cortical que vai virar contração muscular.',
+    p:'Hiperinibido pelo GPi/SNr: pouca amplificação do comando.'},
+  pons:{t:'Ponte (núcleos pontinos)',nt:'Glutamato · relé córtex para cerebelo',
+    n:'Leva a cópia do comando cortical ao cerebelo, primeira estação da alça cerebelo-tálamo-cortical.',
+    p:'No tremor, oscila junto com a alça: um quarto de ciclo depois do córtex motor.'},
+  vim:{t:'Núcleo ventral intermédio (VIM)',nt:'Glutamato · recebe o cerebelo',
+    n:'Relé cerebelar para o córtex motor. É diferente do VA/VL, que recebe os núcleos da base.',
+    p:'Peça do regulador do tremor. Alvo de DBS e de talamotomia por ultrassom focado para tremor refratário.'},
+  cereb:{t:'Cerebelo',nt:'Circuito cerebelo-tálamo-cortical',
+    n:'Ajusta amplitude, tempo e coordenação do movimento.',
+    p:'No modelo dimmer-switch, os núcleos da base disparam o episódio de tremor e o circuito cerebelo, VIM e M1 sustenta e amplifica sua amplitude.'}
+};
+
+/* ---------------- Renderização ---------------- */
+let renderer;
+try{ renderer = new THREE.WebGLRenderer({antialias:true}); }
+catch(e){
+  const f=document.createElement('div');f.className='fail';
+  f.textContent='Este navegador não conseguiu iniciar o WebGL, necessário para a cena 3D. O painel continua funcionando.';
+  stage.appendChild(f);
+}
+const has3D=!!renderer;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(36,1,0.1,200);
+let controls,labelR,composer=null;
+if(has3D){
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.setClearColor(0x06090e,1);
+  stage.insertBefore(renderer.domElement,stage.firstChild);
+  labelR=new THREE.CSS2DRenderer();labelR.domElement.className='labels';
+  stage.insertBefore(labelR.domElement,renderer.domElement.nextSibling);
+  controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=3;controls.maxDistance=80;controls.autoRotateSpeed=.5;
+  scene.add(new THREE.AmbientLight(0x8a9ab8,.75));
+  const k=new THREE.DirectionalLight(0xffffff,.8);k.position.set(5,9,8);scene.add(k);
+  const r=new THREE.DirectionalLight(0x8fb0ff,.35);r.position.set(-7,2,-6);scene.add(r);
+  try{
+    composer=new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene,camera));
+    composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(512,512),.32,.35,.62));
+  }catch(e){composer=null;}
+}
+
+function fresnelMat(color,power,opacity){
+  return new THREE.ShaderMaterial({
+    uniforms:{uC:{value:new THREE.Color(color)},uP:{value:power},uO:{value:opacity}},
+    vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform vec3 uC;uniform float uP;uniform float uO;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),uP);gl_FragColor=vec4(uC*f*uO,1.0);}',
+    transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide
+  });
+}
+function flowMat(color,pattern){
+  return new THREE.ShaderMaterial({
+    uniforms:{uC:{value:new THREE.Color(color)},uI:{value:.5},uT:{value:0},uL:{value:10},uD:{value:pattern},uW:{value:0}},
+    vertexShader:'uniform float uW;varying vec2 vUv;varying vec3 vN;varying vec3 vV;void main(){vUv=uv;vec4 mv=modelViewMatrix*vec4(position+normal*uW,1.0);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform vec3 uC;uniform float uI;uniform float uT;uniform float uL;uniform float uD;varying vec2 vUv;varying vec3 vN;varying vec3 vV;'+
+      'void main(){float s=fract(vUv.x*uL-uT);float core=0.65+0.35*pow(abs(dot(normalize(vN),normalize(vV))),1.2);'+
+      'float solid=0.55+0.6*pow(1.0-s,3.0);'+
+      'float dashed=step(0.42,s)*(0.75+0.5*smoothstep(0.42,1.0,s));'+
+      'float dotted=0.2+1.0*smoothstep(0.32,0.0,abs(s-0.5));'+
+      'float pat=uD<0.5?solid:(uD<1.5?dashed:dotted);'+
+      'gl_FragColor=vec4(uC*core*pat*uI,1.0);}',
+    transparent:true,depthWrite:false,blending:THREE.AdditiveBlending
+  });
+}
+function shell(sx,sy,sz,fn,seg){
+  const g=new THREE.SphereGeometry(1,seg||112,(seg||112)*0.75|0);
+  const p=g.attributes.position,v=new THREE.Vector3();
+  for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);fn&&fn(v);p.setXYZ(i,v.x*sx,v.y*sy,v.z*sz);}
+  g.computeVertexNormals();return g;
+}
+function glowTex(){
+  const c=document.createElement('canvas');c.width=c.height=128;
+  const g=c.getContext('2d'),gr=g.createRadialGradient(64,64,0,64,64,64);
+  gr.addColorStop(0,'rgba(255,255,255,.9)');gr.addColorStop(.3,'rgba(255,255,255,.3)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);
+}
+const GT=has3D?glowTex():null;
+
+/* ---------------- Geometria: forma realista ---------------- */
+const P={
+  ctx:V(1.9,3.35,-0.6),m1out:V(2.05,3.25,-0.5),
+  d1:V(2.25,1.15,0.6),d2:V(2.35,0.62,0.25),
+  gpe:V(1.8,0.72,0.2),gpi:V(1.45,0.6,0.1),
+  stn:V(0.95,-0.12,-0.6),snc:V(0.5,-0.7,-0.75),snr:V(0.6,-0.86,-0.6),
+  thal:V(0.6,1.25,-0.85),vim:V(0.95,1.0,-1.1),
+  pons:V(0.2,-1.6,-1.4),cereb:V(1.3,-1.7,-3.1),spinal:V(0.12,-4.9,-1.72)
+};
+const REALN={
+  str:{pos:V(2.4,0.9,0.4),sc:[.4,.78,1.15],op:.32},
+  d1:{pos:P.d1,sc:[.14,.14,.14]},d2:{pos:P.d2,sc:[.14,.14,.14]},
+  gpe:{pos:P.gpe,sc:[.22,.55,.75]},gpi:{pos:P.gpi,sc:[.16,.42,.55]},
+  thal:{pos:P.thal,sc:[.5,.55,.95],op:.75},vim:{pos:P.vim,sc:[.17,.17,.17]},
+  stn:{pos:P.stn,sc:[.33,.13,.2],rot:[0,.5,-.3]},
+  snc:{pos:P.snc,sc:[.5,.1,.26],rot:[0,.4,.15],op:.5},
+  snr:{pos:P.snr,sc:[.52,.1,.28],rot:[0,.4,.15]},
+  cereb:{pos:P.cereb,sc:[.3,.3,.3]}
+};
+// âncoras dos rótulos (fora das estruturas, com linha guia)
+const RLBL={
+  ctx:[V(3.6,4.1,-0.6),'Córtex motor'],str:[V(3.75,1.95,0.4),'Putâmen'],caud:[V(1.1,3.0,1.45),'Caudado'],
+  d1:[V(3.75,1.3,0.6),'MSN D1'],d2:[V(3.75,0.7,0.25),'MSN D2'],gpe:[V(3.75,0.1,0.2),'GPe'],gpi:[V(3.75,-0.5,0.1),'GPi'],
+  thal:[V(-1.1,1.9,-0.85),'Tálamo VA/VL'],vim:[V(-1.1,1.15,-1.1),'VIM'],stn:[V(-1.1,0.1,-0.6),'STN'],
+  snc:[V(-1.1,-0.65,-0.75),'SNc'],snr:[V(-1.1,-1.3,-0.6),'SNr'],cereb:[V(3.2,-2.2,-3.1),'Cerebelo'],spinal:[V(1.3,-4.7,-1.72),'Medula']
+};
+
+/* ---------------- Geometria: forma esquemática ---------------- */
+const Q={
+  ctx:{p:V(0,4.4),w:3.2,h:.7},str:{p:V(0,2.75),w:3.9,h:1.25},
+  d1:{p:V(.85,2.7),w:1.4,h:.55},d2:{p:V(-.85,2.7),w:1.4,h:.55},
+  gpe:{p:V(-3,1.2),w:1.4,h:.7},stn:{p:V(-3,-.6),w:1.4,h:.7},
+  gpi:{p:V(.3,-.6),w:1.4,h:.7},snr:{p:V(1.95,-.6),w:1.4,h:.7},
+  snc:{p:V(3.2,1.3),w:1.6,h:.7},thal:{p:V(0,-2.4),w:2.0,h:.7},
+  vim:{p:V(-1.5,-2.4),w:.8,h:.6},cereb:{p:V(-3.6,-3.9),w:1.4,h:.7},
+  pons:{p:V(-5.3,-1.2),w:1.0,h:.6},spinal:{p:V(5.4,-4.4),w:1.4,h:.6}
+};
+const QLBL={ctx:['Córtex motor','glutamato'],str:['Estriado',''],d1:['MSN D1','direta'],d2:['MSN D2','indireta'],gpe:['GPe','GABA'],stn:['STN','glutamato'],gpi:['GPi','GABA'],snr:['SNr','GABA'],snc:['SNc','dopamina'],thal:['Tálamo','VA/VL'],vim:['VIM',''],cereb:['Cerebelo',''],pons:['Ponte',''],spinal:['Medula','']};
+function E(k,side,off){
+  const q=Q[k],o=off||0;
+  if(side==='t')return V(q.p.x+o,q.p.y+q.h/2);
+  if(side==='b')return V(q.p.x+o,q.p.y-q.h/2);
+  if(side==='l')return V(q.p.x-q.w/2,q.p.y+o);
+  return V(q.p.x+q.w/2,q.p.y+o);
+}
+function ortho(pts,r){
+  r=r||.22;if(pts.length<3)return pts;
+  const out=[pts[0]];
+  for(let i=1;i<pts.length-1;i++){
+    const a=pts[i-1],b=pts[i],c=pts[i+1];
+    const u=b.clone().sub(a).normalize(),w=c.clone().sub(b).normalize();
+    out.push(b.clone().addScaledVector(u,-r),b.clone().addScaledVector(u,-r*.3).addScaledVector(w,r*.3),b.clone().addScaledVector(w,r));
+  }
+  out.push(pts[pts.length-1]);return out;
+}
+
+/* ---------------- Vias ---------------- */
+const LINKS=[
+  {n:['ctx','d1'],src:'ctx',nt:'glu',tags:['direta'],real:[P.ctx,V(2.4,2.4,0.4),P.d1],esq:()=>[E('ctx','b',.85),E('d1','t')]},
+  {n:['ctx','d2'],src:'ctx',nt:'glu',tags:['indireta'],real:[P.ctx,V(2.65,2.1,0.05),P.d2],esq:()=>[E('ctx','b',-.85),E('d2','t')]},
+  {n:['ctx','stn'],src:'ctx',nt:'glu',tags:['hiper'],real:[P.ctx,V(1.5,2.0,-1.35),V(1.15,0.45,-1.05),P.stn],esq:()=>[E('ctx','l'),V(-4.15,4.4),V(-4.15,-.6),E('stn','l')]},
+  {n:['snc','d1'],src:'dopa',nt:'da1',tags:['nigro','direta'],real:[P.snc,V(1.5,-0.55,0.35),V(2.2,0.35,0.75),P.d1],esq:()=>[E('snc','t'),V(3.2,2.7),E('d1','r')]},
+  {n:['snc','d2'],src:'dopa',nt:'da2',tags:['nigro','indireta'],real:[P.snc,V(1.7,-0.45,-0.05),V(2.5,0.15,0.2),P.d2],esq:()=>[E('snc','l'),V(-.55,1.3),E('d2','b',.3)]},
+  {n:['d1','gpi'],src:'d1',nt:'gaba',tags:['direta'],real:[P.d1,V(1.85,1.0,0.55),P.gpi],esq:()=>[E('d1','b',-.3),E('gpi','t',.25)]},
+  {n:['d1','snr'],src:'d1',nt:'gaba',tags:['direta'],real:[P.d1,V(1.95,0.05,0.75),V(1.15,-0.6,0.05),P.snr],esq:()=>[E('d1','b',.4),V(1.25,1.8),V(1.95,1.8),E('snr','t')]},
+  {n:['d2','gpe'],src:'d2',nt:'gaba',tags:['indireta'],real:[P.d2,V(2.08,0.5,0.05),P.gpe],esq:()=>[E('d2','b',-.3),V(-1.15,1.2),E('gpe','r')]},
+  {n:['gpe','stn'],src:'gpe',nt:'gaba',tags:['indireta'],real:[P.gpe,V(1.65,0.1,-0.45),P.stn],esq:()=>[E('gpe','b',-.3),E('stn','t',-.3)]},
+  {n:['stn','gpe'],src:'stn',nt:'glu',tags:['indireta'],real:[P.stn,V(1.9,0.32,-0.15),P.gpe],esq:()=>[E('stn','t',.3),E('gpe','b',.3)]},
+  {n:['stn','gpi'],src:'stn',nt:'glu',tags:['indireta','hiper'],real:[P.stn,V(1.25,0.1,-0.2),P.gpi],esq:()=>[E('stn','r'),E('gpi','l')]},
+  {n:['gpi','thal'],src:'gpi',nt:'gaba',tags:['direta','indireta','hiper','tremor'],trg:true,real:[P.gpi,V(1.05,0.35,-0.25),V(0.8,0.85,-0.55),P.thal],esq:()=>[E('gpi','b'),E('thal','t',.3)]},
+  {n:['snr','thal'],src:'snr',nt:'gaba',tags:['direta'],real:[P.snr,V(0.45,-0.25,-0.75),P.thal],esq:()=>[E('snr','b'),V(1.95,-2.4),E('thal','r')]},
+  {n:['thal','ctx'],src:'thal',nt:'glu',tags:['direta','indireta','hiper','tremor'],trg:true,real:[P.thal,V(1.05,2.5,-0.95),P.ctx],esq:()=>[E('thal','b'),V(0,-3.25),V(4.5,-3.25),V(4.5,4.4),E('ctx','r')]},
+  {n:['ctx','spinal'],src:'m1',nt:'glu',tags:['direta','indireta','hiper','tremor'],real:[P.m1out,V(2.1,2.1,-0.35),V(1.35,0.75,-0.45),V(0.55,-1.0,-1.15),V(0.3,-2.9,-1.45),P.spinal],esq:()=>[E('ctx','t',1.0),V(1.0,5.2),V(5.4,5.2),E('spinal','t')]},
+  {n:['ctx','pons'],src:'m1',nt:'glu',tags:['tremor'],tr:true,real:[P.ctx,V(1.7,1.3,-1.4),V(0.6,-0.6,-1.35),P.pons],esq:()=>[E('ctx','t',-1.0),V(-1.0,5.2),V(-5.3,5.2),E('pons','t')]},
+  {n:['pons','cereb'],src:'pons',nt:'glu',tags:['tremor'],tr:true,real:[P.pons,V(0.8,-1.9,-2.3),P.cereb],esq:()=>[E('pons','b'),V(-5.3,-3.9),E('cereb','l')]},
+  {n:['cereb','vim'],src:'cereb',nt:'glu',tags:['tremor'],tr:true,real:[P.cereb,V(1.25,-0.6,-2.15),V(1.05,0.35,-1.55),P.vim],esq:()=>[E('cereb','r'),V(-1.5,-3.9),E('vim','b')]},
+  {n:['vim','ctx'],src:'vim',nt:'glu',tags:['tremor'],tr:true,real:[P.vim,V(1.6,2.3,-1.05),P.ctx],esq:()=>[E('vim','t'),E('ctx','b',-1.5)]}
+];
+
+/* ---------------- Construção das instâncias ---------------- */
+const BADGEK=['ctx','d1','d2','gpe','stn','gpi','snr','thal','snc'];
+let instances=[],pickables=[];
+function addNode(inst,key,mesh,mats,glow){
+  const nd=inst.nodes[key]||(inst.nodes[key]={meshes:[],mats:[],glows:[]});
+  if(mesh){nd.meshes.push(mesh);mesh.userData.key=key;pickables.push(mesh);}
+  (mats||[]).forEach(m=>{m.userData.baseOp=m.opacity;nd.mats.push(m);});
+  if(glow)nd.glows.push(glow);
+}
+function addLabel(inst,el,pos,key,cls){
+  const o=new THREE.CSS2DObject(el);o.position.copy(pos);inst.g.add(o);
+  inst.labels.push({o,el,key,cls});return o;
+}
+function lblEl(cls,html,color){
+  const w=document.createElement('div');w.className=cls;
+  const s=document.createElement('span');s.innerHTML=html;if(color)s.style.setProperty('--c',color);w.appendChild(s);return w;
+}
+function nucleusMat(col,op){
+  return new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.15,roughness:.45,metalness:0,transparent:true,opacity:op||.92,depthWrite:!op||op>.8});
+}
+function buildReal(inst){
+  const g=inst.g;
+  const brain=new THREE.Mesh(shell(3.35,2.65,4.1,v=>{
+    let r=1+.022*Math.sin(9*v.x+2)*Math.sin(8*v.y)*Math.sin(10*v.z+1)+.012*Math.sin(17*v.x)*Math.sin(15*v.z+.5);
+    if(v.y>-.25)r*=1-.08*Math.exp(-(v.x*v.x)/.003);
+    v.multiplyScalar(r);if(v.y<-.35)v.y=-.35+(v.y+.35)*.5;
+  }),fresnelMat(0x7f93ad,3.4,.32));
+  brain.position.set(0,1.35,-.4);g.add(brain);
+  const cer=new THREE.Mesh(shell(2.3,1.0,1.25,v=>{v.multiplyScalar(1+.025*Math.sin(60*v.y));},80),fresnelMat(0x7f9aa8,3.2,.26));
+  cer.position.set(0,-1.75,-3.15);g.add(cer);
+  const stemC=new THREE.CatmullRomCurve3([V(0,.5,-.9),V(0,-.8,-1.15),V(0,-2.4,-1.45),V(0,-3.6,-1.6),V(0,-5.2,-1.75)]);
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(stemC,80,.62,32,false),fresnelMat(0x7f93ad,3.2,.24)));
+
+  const sph=new THREE.SphereGeometry(1,48,32);
+  for(const k in REALN){
+    const d=REALN[k];const mat=nucleusMat(COL[k],d.op);
+    const m=new THREE.Mesh(sph,mat);m.position.copy(d.pos);m.scale.set(d.sc[0],d.sc[1],d.sc[2]);
+    if(d.rot)m.rotation.set(d.rot[0],d.rot[1],d.rot[2]);g.add(m);
+    const rim=new THREE.Mesh(sph,fresnelMat(COL[k],2.2,.75));rim.position.copy(m.position);rim.scale.copy(m.scale).multiplyScalar(1.01);rim.rotation.copy(m.rotation);g.add(rim);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:GT,color:COL[k],blending:THREE.AdditiveBlending,transparent:true,depthWrite:false,opacity:.1}));
+    sp.position.copy(d.pos);const s=Math.max(d.sc[0],d.sc[1],d.sc[2])*2.2;sp.scale.set(s,s,1);g.add(sp);
+    addNode(inst,k,m,[mat,rim.material],sp);
+  }
+  // caudado (cabeça e corpo) com o mesmo material do estriado
+  const sm=inst.nodes.str.mats[0];
+  const head=new THREE.Mesh(sph,sm);head.position.set(1.1,1.8,1.35);head.scale.set(.42,.55,.62);g.add(head);
+  const body=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V(1.1,1.95,1.0),V(1.2,2.3,0),V(1.35,2.15,-1.0),V(1.6,1.55,-1.75),V(1.9,.9,-1.95)]),60,.17,16,false),sm);g.add(body);
+  addNode(inst,'str',head);addNode(inst,'str',body);
+  // córtex motor (giro pré-central em corte coronal)
+  const cc=new THREE.CatmullRomCurve3([V(.25,4.0,-.5),V(1.2,3.85,-.55),V(2.2,3.38,-.6),V(2.95,2.45,-.6),V(3.18,1.4,-.6)]);
+  const cm=nucleusMat(COL.ctx,.9);
+  const ctxm=new THREE.Mesh(new THREE.TubeGeometry(cc,80,.18,20,false),cm);g.add(ctxm);
+  addNode(inst,'ctx',ctxm,[cm]);
+  // neurônios dopaminérgicos com neuromelanina
+  const N=64;const cells=new THREE.InstancedMesh(new THREE.SphereGeometry(.036,10,8),new THREE.MeshStandardMaterial({color:0x3a2412,emissive:0xffb347,emissiveIntensity:.8,roughness:.5}),N);
+  const grp=new THREE.Group();grp.position.copy(P.snc);grp.rotation.set(0,.4,.15);g.add(grp);grp.add(cells);
+  const mtx=new THREE.Matrix4();let i=0,seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+  while(i<N){const x=rnd()*2-1,y=rnd()*2-1,z=rnd()*2-1;if(x*x+y*y+z*z>1)continue;mtx.makeTranslation(x*.45,y*.08,z*.23);cells.setMatrixAt(i++,mtx);}
+  cells.instanceMatrix.needsUpdate=true;inst.cells=cells;inst.cellsN=N;
+
+  // vias
+  LINKS.forEach(l=>{
+    const c=new THREE.CatmullRomCurve3(l.real,false,'centripetal');const len=c.getLength();
+    const t=NT[l.nt];const mat=flowMat(t.c,t.p);mat.uniforms.uL.value=Math.max(2,len*(t.p===0?1.4:3.0));
+    const mesh=new THREE.Mesh(new THREE.TubeGeometry(c,Math.max(40,len*30|0),.022,8,false),mat);g.add(mesh);
+    inst.links.push({def:l,mesh,mat,phase:0,extras:[]});
+  });
+  // rótulos com linha guia
+  for(const k in RLBL){
+    const [pos,txt]=RLBL[k];const nk=k==='caud'?'str':k;
+    const from=k==='caud'?V(1.1,2.2,1.35):(k==='ctx'?V(2.6,3.2,-.6):(k==='spinal'?P.spinal:REALN[k].pos));
+    const lineMat=new THREE.LineBasicMaterial({color:COL[nk],transparent:true,opacity:.55});
+    const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([from,pos]),lineMat);g.add(line);
+    const le=lblEl('lbl',txt,hex(COL[nk]));
+    if(BADGEK.indexOf(k)>=0){const b=document.createElement('b');b.className='bd';b.hidden=true;le.appendChild(b);inst.badges.push({key:k,el:b,t:''});}
+    addLabel(inst,le,pos,nk,'lbl').userData.line=line;
+    inst.leaders.push({line,key:nk});
+  }
+}
+function buildEsq(inst){
+  const g=inst.g;
+  const order=['str','ctx','d1','d2','gpe','stn','gpi','snr','snc','thal','vim','cereb','pons','spinal'];
+  order.forEach(k=>{
+    const q=Q[k];const isStr=k==='str';
+    const geo=new THREE.BoxGeometry(q.w,q.h,isStr?.08:.22);
+    const mat=isStr?new THREE.MeshStandardMaterial({color:COL[k],emissive:COL[k],emissiveIntensity:.15,roughness:.55,transparent:true,opacity:.16,depthWrite:false}):new THREE.MeshBasicMaterial({color:COL[k],transparent:true,opacity:1});
+    const m=new THREE.Mesh(geo,mat);m.position.set(q.p.x,q.p.y,isStr?-.1:(k==='d1'||k==='d2'?.05:0));g.add(m);
+    const edge=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:isStr?new THREE.Color(COL[k]).lerp(new THREE.Color(0xffffff),.45):new THREE.Color(0x000000),transparent:true,opacity:isStr?.7:1}));
+    edge.position.copy(m.position);g.add(edge);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:GT,color:COL[k],blending:THREE.AdditiveBlending,transparent:true,depthWrite:false,opacity:.08}));
+    const fm=[];if(!isStr){const fmat=new THREE.MeshBasicMaterial({color:0xF4F7FB,transparent:true,opacity:1});const fr=new THREE.Mesh(new THREE.BoxGeometry(q.w+.1,q.h+.1,.18),fmat);fr.position.set(m.position.x,m.position.y,m.position.z-.03);g.add(fr);fm.push(fmat);inst.frames[k]={fr,fmat,box:mat};}
+    addNode(inst,k,m,isStr?[mat,edge.material]:[mat].concat(fm));
+    const [t,s]=QLBL[k];
+    const pos=isStr?V(0,3.62,.2):V(q.p.x,q.p.y,.3);
+    addLabel(inst,lblEl(isStr?'blbl out':(k==='d2'?'blbl light':'blbl'),t+(s?'<small>'+s+'</small>':''),hex(COL[k])),pos,k,'blbl');
+    if(BADGEK.indexOf(k)>=0){const w=document.createElement('div');w.className='bdw';const b=document.createElement('b');b.className='bd';b.hidden=true;w.appendChild(b);
+      const o=new THREE.CSS2DObject(w);o.position.set(q.p.x+q.w/2,q.p.y+q.h/2+.06,.4);g.add(o);inst.badges.push({key:k,el:b,o,t:''});}
+  });
+  LINKS.forEach((l,idx)=>{
+    const pts=ortho(l.esq()).map(p=>V(p.x,p.y,.16+(idx%3)*.02));
+    const c=new THREE.CatmullRomCurve3(pts,false,'centripetal');const len=c.getLength();
+    const t=NT[l.nt];const mat=flowMat(t.c,t.p);mat.uniforms.uL.value=Math.max(2,len*(t.p===0?1.1:2.4));
+    const mesh=new THREE.Mesh(new THREE.TubeGeometry(c,Math.max(40,len*24|0),.06,10,false),mat);g.add(mesh);
+    const under=new THREE.Mesh(new THREE.TubeGeometry(c,Math.max(40,len*24|0),.15,10,false),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.85,depthWrite:false}));under.position.z=-.05;under.renderOrder=-1;g.add(under);
+    // ponta: seta para excitação, barra em T para inibição
+    const end=c.getPointAt(1),tan=c.getTangentAt(1),ang=Math.atan2(tan.y,tan.x);
+    const hm=new THREE.MeshBasicMaterial({color:t.c,transparent:true,opacity:.9});
+    let head;
+    if(l.nt==='gaba'){head=new THREE.Mesh(new THREE.BoxGeometry(.5,.11,.11),hm);head.rotation.z=ang+Math.PI/2;head.position.copy(end).addScaledVector(tan,-.04);}
+    else{head=new THREE.Mesh(new THREE.ConeGeometry(.17,.36,16),hm);head.rotation.z=ang-Math.PI/2;head.position.copy(end).addScaledVector(tan,-.18);}
+    g.add(head);
+    // sinal (+/−) perto do alvo
+    const sp=c.getPointAt(.82),nrm=V(-tan.y,tan.x).multiplyScalar(.24);
+    const sign=l.nt==='glu'?'+':(l.nt==='gaba'?'−':(l.nt==='da1'?'+':'−'));
+    const sEl=lblEl('sgn',sign);sEl.firstChild.style.color=hex(t.c);
+    const so=addLabel(inst,sEl,sp.clone().add(nrm),'_sign','sgn');
+    inst.links.push({def:l,mesh,mat,phase:0,extras:[{m:hm}],head,signObj:so,under});
+  });
+}
+function buildInstance(kind,model,offset,title,titleColor){
+  const g=new THREE.Group();g.position.x=offset;scene.add(g);
+  const inst={kind,model,g,nodes:{},links:[],labels:[],leaders:[],badges:[],frames:{},offset};
+  if(kind==='real')buildReal(inst);else buildEsq(inst);
+  if(title){
+    const el=lblEl('ttl',title);el.firstChild.style.color=titleColor;
+    inst.titleObj=addLabel(inst,el,kind==='real'?V(1.3,5.0,-.4):V(0,6.0,0),'_title','ttl');
+  }
+  return inst;
+}
+function disposeAll(){
+  instances.forEach(inst=>{
+    inst.labels.forEach(l=>{if(l.el.parentNode)l.el.parentNode.removeChild(l.el);});
+    inst.badges.forEach(b=>{if(b.o&&b.o.element.parentNode)b.o.element.parentNode.removeChild(b.o.element);});
+    inst.g.traverse(o=>{if(o.geometry&&o.geometry.dispose)o.geometry.dispose();if(o.material&&o.material.dispose&&!o.material.isSpriteMaterial)o.material.dispose();});
+    scene.remove(inst.g);
+  });
+  instances=[];pickables=[];
+}
+
+/* ---------------- Modelo de taxa ---------------- */
+const S={dopa:1,ldopa:false,dbs:false,beta:true,tremor:false,path:'todas',loop:true,sel:'stn',view:'real',cmp:false,labels:true};
+const TAU={ctx:.08,m1:.25,d1:.3,d2:.3,gpe:.25,stn:.12,gpi:.15,snr:.15,thal:.2,pons:.2,cereb:.2,vim:.2};
+const BETAF=reduce?1.0:2.0,TREMF=reduce?.8:1.4;
+let cmdT=99;
+const env=t=>t<0?0:t<.3?t/.3:t<1.9?1:t<2.4?1-(t-1.9)/.5:0;
+/* Tremor: a alça córtex, ponte, cerebelo, VIM e córtex oscila com cada estação um quarto de ciclo atrás da anterior,
+   para o sinal aparecer girando. O GPi só dispara no início do episódio (burst); a alça mantém o ritmo sozinha. */
+const LOOPW=k=>.5+.5*Math.sin(2*Math.PI*TREMF*time_-k*Math.PI/2);
+let time_=0;
+function stepModel(dt,time,X,d,c,dbs,trem,tOsc,burst){
+  time_=time;burst=burst||0;
+  const stnOut=X.stn*(dbs?.55:1);
+  const tg={
+    ctx:c,d1:cl(c*(.4+.8*d)),d2:cl(c*(1.2-.7*d)),
+    gpe:cl(.9-.8*X.d2+.3*stnOut),stn:cl(.35+.4*c-.4*X.gpe),
+    gpi:cl(.4+stnOut-.8*X.d1+.6*burst),snr:cl(.4+stnOut-.8*X.d1),
+    thal:cl(.95-1.3*X.gpi),m1:cl(.1+c*(.35+.75*X.thal)+.3*trem*(LOOPW(0)-.5)+.25*burst),
+    pons:cl(.25+.4*X.m1*(1-.6*trem)+.65*trem*LOOPW(1)),
+    cereb:cl(.22+.7*trem*LOOPW(2)),
+    vim:cl(.22+.7*trem*LOOPW(3))
+  };
+  for(const k in tg)X[k]+=(tg[k]-X[k])*Math.min(1,dt/TAU[k]);
+}
+/* Episódio de tremor (s): disparo 0 a 0,6 · a alça cresce até 1,6 · mantida até 6,5 · amortece até 7,5 · pausa até 9 */
+let tremEpT=0;const EP=9;
+const tremEnv=t=>t<.6?0:t<1.6?(t-.6):t<6.5?1:t<7.5?1-(t-6.5):0;
+const burstEnv=t=>t<.6?Math.sin(Math.PI*t/.6):0;
+const BASE={ctx:.5,m1:.55,d1:.6,d2:.25,gpe:.78,stn:.24,gpi:.16,snr:.16,thal:.74,pons:.3,cereb:.22,vim:.22};
+const REF={};let NORM_GAIN=.45;
+(function(){
+  const X=Object.assign({},BASE);for(let i=0;i<600;i++)stepModel(1/60,i/60,X,1,.5,false,0,0);
+  Object.assign(REF,X);const Y=Object.assign({},X);for(let i=0;i<600;i++)stepModel(1/60,i/60,Y,1,1,false,0,0);
+  NORM_GAIN=Math.max(.05,Y.m1-X.m1);
+})();
+function newModel(){return Object.assign({},REF,{dS:1,dN:1,trem:0,B:0,burst:0});}
+const MAIN=newModel(),NORM=newModel();
+let gainBase=MAIN.m1,gainPeak=MAIN.m1,lastGainPct=100;
+
+/* ---------------- Painel ---------------- */
+document.getElementById('keys').innerHTML=NAMES.map(([k,n])=>'<span><i style="background:'+hex(COL[k])+'"></i>'+n+'</span>').join('');
+const BARS=[['d1','MSN D1'],['d2','MSN D2'],['gpe','GPe'],['stn','STN'],['gpi','GPi/SNr'],['thal','Tálamo'],['m1','Córtex M1']];
+const barsEl=document.getElementById('bars'),barRefs={};
+BARS.forEach(([k,n])=>{
+  const c=hex(COL[k==='m1'?'ctx':k]);
+  const r=document.createElement('div');r.className='bar';
+  r.innerHTML='<span>'+n+'</span><div class="track"><div class="fill" style="background:'+c+'"></div><div class="ref"></div></div><span class="val">0</span>';
+  barsEl.appendChild(r);
+  barRefs[k]={fill:r.querySelector('.fill'),val:r.querySelector('.val')};
+  r.querySelector('.ref').style.left='calc('+(REF[k]*100).toFixed(1)+'% - 1px)';
+});
+function renderCard(){
+  const i=INFO[S.sel]||INFO.stn;
+  document.getElementById('card').innerHTML='<h2>Estrutura selecionada</h2><div><h3 style="color:'+hex(COL[S.sel]||0xffffff)+'">'+i.t+'</h3><p class="nt">'+i.nt+'</p><dl><dt>No circuito normal</dt><dd>'+i.n+'</dd><dt>No parkinsonismo</dt><dd>'+i.p+'</dd></dl></div>';
+}
+renderCard();
+
+const dopaIn=document.getElementById('dopa');
+const handG=document.getElementById('handG');
+const mBtns={normal:document.getElementById('mNormal'),pd:document.getElementById('mPD'),cmp:document.getElementById('mCmp')};
+function syncMode(){
+  const pd=S.dopa<.8;
+  mBtns.normal.setAttribute('aria-pressed',String(!S.cmp&&!pd));
+  mBtns.pd.setAttribute('aria-pressed',String(!S.cmp&&pd));
+  mBtns.cmp.setAttribute('aria-pressed',String(S.cmp));
+}
+function setDopa(v){S.dopa=v/100;dopaIn.value=v;document.getElementById('dopaOut').textContent=Math.round(v)+'%';syncMode();updateTitles();}
+dopaIn.addEventListener('input',()=>setDopa(+dopaIn.value));
+mBtns.normal.addEventListener('click',()=>{const r=S.cmp;S.cmp=false;dopaIn.max=100;setDopa(100);if(r)rebuild();});
+mBtns.pd.addEventListener('click',()=>{const r=S.cmp;S.cmp=false;dopaIn.max=100;setDopa(22);if(r)rebuild();});
+mBtns.cmp.addEventListener('click',()=>{if(S.cmp)return;S.cmp=true;dopaIn.max=70;setDopa(S.dopa>.7?22:Math.round(S.dopa*100));rebuild();});
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
+  if(S.view===b.dataset.view)return;S.view=b.dataset.view;
+  document.querySelectorAll('[data-view]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));rebuild();
+}));
+function toggleChip(id,key){const b=document.getElementById(id);b.addEventListener('click',()=>{S[key]=!S[key];b.setAttribute('aria-pressed',String(S[key]));updateTitles();});}
+toggleChip('ldopa','ldopa');toggleChip('dbs','dbs');
+document.getElementById('fire').addEventListener('click',()=>fire());
+document.getElementById('loop').addEventListener('change',e=>S.loop=e.target.checked);
+document.getElementById('beta').addEventListener('change',e=>S.beta=e.target.checked);
+document.getElementById('tremor').addEventListener('change',e=>{S.tremor=e.target.checked;if(S.tremor)tremEpT=0;});
+document.getElementById('labels').addEventListener('change',e=>{S.labels=e.target.checked;});
+document.getElementById('spin').addEventListener('change',e=>{if(controls)controls.autoRotate=e.target.checked;});
+document.getElementById('paths').addEventListener('click',e=>{
+  const b=e.target.closest('[data-p]');if(!b)return;S.path=b.dataset.p;
+  document.querySelectorAll('#paths [data-p]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  if(S.path==='tremor'){if(!S.tremor){S.tremor=true;document.getElementById('tremor').checked=true;}tremEpT=0;}
+});
+function fire(){cmdT=0;gainBase=MAIN.m1;gainPeak=MAIN.m1;}
+function mainTitle(){
+  let t='Parkinson · SNc '+Math.round(S.dopa*100)+'%';
+  if(S.ldopa)t+=' · levodopa';if(S.dbs)t+=' · DBS';return t;
+}
+function updateTitles(){
+  instances.forEach(inst=>{if(inst.titleObj&&inst.model===MAIN)inst.titleObj.element.firstChild.textContent=mainTitle();});
+}
+
+/* ---------------- Câmera e montagem ---------------- */
+let lastAspect=0;
+function fitCamera(){
+  if(!has3D)return;
+  const r=stage.getBoundingClientRect();const aspect=(r.width||1)/(r.height||1);lastAspect=aspect;
+  const real=S.view==='real';
+  const W=(real?8.2:12.6)+(S.cmp?(real?9.0:13.2):0);
+  const H=real?10.4:11.4;
+  const cy=real?.15:.6;
+  const t=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  const dist=Math.max(H/(2*t),W/(2*t*aspect))*1.04;
+  const dir=real?V(.32,.14,1).normalize():V(0,0,1);
+  const tx=real&&!S.cmp?.9:0;
+  controls.target.set(tx,cy,real?-.6:0);
+  camera.position.copy(controls.target).addScaledVector(dir,dist);
+  camera.near=.1;camera.far=dist*4;camera.updateProjectionMatrix();controls.update();
+}
+function rebuild(){
+  stage.classList.toggle('cmp',S.cmp);
+  if(!has3D)return;
+  disposeAll();
+  const real=S.view==='real';
+  if(S.cmp){
+    const off=real?4.5:6.6;
+    instances.push(buildInstance(S.view,NORM,-off-(real?.9:0),'Normal','#5BE0A0'));
+    instances.push(buildInstance(S.view,MAIN,off-(real?.9:0),mainTitle(),'#FF7A8A'));
+  }else{
+    instances.push(buildInstance(S.view,MAIN,0,null));
+  }
+  fitCamera();
+}
+if(has3D){
+  const ray=new THREE.Raycaster(),mp=new THREE.Vector2();let down=null;
+  renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
+  renderer.domElement.addEventListener('pointerup',e=>{
+    if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;
+    const r=renderer.domElement.getBoundingClientRect();
+    mp.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+    ray.setFromCamera(mp,camera);const h=ray.intersectObjects(pickables,false);
+    if(h.length){const k=h[0].object.userData.key;if(INFO[k]){S.sel=k;renderCard();}}
+  });
+}
+
+/* ---------------- Osciloscópio ---------------- */
+const scope=document.getElementById('scope'),sg=scope.getContext('2d');
+const SR=500,BUF=new Float32Array(SR);let bufI=0,simT=0,noiseS=0;
+function sizeScope(){const r=scope.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);scope.width=Math.max(10,r.width*dpr|0);scope.height=Math.max(10,r.height*dpr|0);}
+function pushScope(dt,B,cmdEnv,d){
+  const n=Math.round(dt*SR);
+  for(let i=0;i<n;i++){
+    simT+=1/SR;noiseS+=(Math.random()*2-1-noiseS)*.35;
+    const beta=(.16*(1-cmdEnv)*d+.85*B)*Math.sin(2*Math.PI*21*simT+.7*Math.sin(2*Math.PI*.6*simT));
+    const gamma=.22*cmdEnv*d*Math.sin(2*Math.PI*78*simT);
+    BUF[bufI]=beta+gamma+.14*noiseS;bufI=(bufI+1)%SR;
+  }
+}
+function drawScope(B){
+  const w=scope.width,h=scope.height;sg.clearRect(0,0,w,h);
+  sg.strokeStyle='rgba(132,148,170,.18)';sg.lineWidth=1;
+  for(let i=1;i<10;i++){const x=w*i/10;sg.beginPath();sg.moveTo(x,0);sg.lineTo(x,h);sg.stroke();}
+  sg.beginPath();sg.moveTo(0,h/2);sg.lineTo(w,h/2);sg.stroke();
+  sg.strokeStyle=hex(COL.stn);sg.lineWidth=Math.max(1.2,w/400);sg.beginPath();
+  for(let i=0;i<SR;i++){const v=BUF[(bufI+i)%SR];const x=w*i/(SR-1),y=h/2-v*h*.38;i?sg.lineTo(x,y):sg.moveTo(x,y);}
+  sg.stroke();
+}
+
+/* ---------------- Legenda da sequência ---------------- */
+const stepEl=document.getElementById('step');let lastStepKey='';
+function setStep(key,html){if(key===lastStepKey)return;lastStepKey=key;stepEl.innerHTML=html;}
+function tremCaptions(pd){
+  if(!pd)return['tn','<b>Tremor</b>Com a dopamina preservada, o pálido não dispara e a alça córtex, ponte, cerebelo e VIM fica estável. Reduza a SNc ou clique em Parkinson.'];
+  const t=tremEpT;
+  if(t<.6)return['t1','<b>1 · Gatilho</b>No início do episódio, o GPi sem dopamina dispara de forma transitória. O sinal passa pelo tálamo VA/VL e chega ao córtex motor.<span class="slow">o sinal exato desse disparo (excitação ou pausa) ainda não é conhecido</span>'];
+  if(t<1.6)return['t2','<b>2 · A alça entra em oscilação</b>O córtex motor empurra a alça: ponte, cerebelo, tálamo VIM e de volta ao córtex. O GPi já se calou.<span class="slow">VIM recebe o cerebelo; VA/VL recebe os núcleos da base</span>'];
+  if(t<6.5)return['t3','<b>3 · Tremor mantido</b>Cada volta do sinal sai do córtex pela medula como um comando ao músculo: flexão, extensão, flexão. Cerebelo e VIM regulam a amplitude.<span class="slow">câmera lenta · no paciente, 4 a 6 Hz</span>'];
+  if(t<7.5)return['t4','<b>4 · Fim do episódio</b>A alça amortece e a mão volta a parar.'];
+  return['t5','<b>Pausa</b>Alça estável. O próximo episódio começa com um novo disparo do pálido.'];
+}
+function captions(pd){
+  if(S.path==='tremor')return tremCaptions(pd);
+  const c=S.cmp;
+  if(cmdT<.35)return['h','<b>1 · Hiperdireta</b>O córtex excita o STN diretamente, que excita GPi/SNr: freio rápido e amplo enquanto a ação é selecionada.<span class="slow">real: poucos milissegundos · câmera lenta</span>'];
+  if(cmdT<1.3)return c?['dc','<b>2 · Direta</b>À esquerda, MSN D1 silenciam o GPi e o tálamo amplifica o comando. À direita, sem dopamina, o GPi quase não pausa e o tálamo segue freado.<span class="slow">compare o brilho do tálamo e do córtex</span>']
+    :pd?['d1','<b>2 · Direta fraca</b>Com pouca dopamina, as MSN D1 respondem mal: o GPi quase não pausa e o tálamo continua freado. O comando sobe pouco (bradicinesia).<span class="slow">compare o ganho no painel</span>']
+    :['d0','<b>2 · Direta</b>MSN D1, facilitadas pela dopamina, inibem GPi/SNr. O tálamo é desinibido e amplifica o comando no córtex motor.<span class="slow">dupla inibição = efeito excitatório</span>'];
+  if(cmdT<2.4)return (pd||c)?['i1','<b>3 · Indireta</b>MSN D2 inibem o GPe, que solta o STN e reforça a saída do GPi. No Parkinson, sem o freio dopaminérgico sobre D2, essa via domina.<span class="slow">tripla inibição + excitação = efeito inibitório</span>']
+    :['i0','<b>3 · Indireta</b>MSN D2 inibem o GPe, que solta o STN: ajusta e encerra o movimento, suprimindo programas concorrentes.<span class="slow">tripla inibição + excitação = efeito inibitório</span>'];
+  return (pd||c)?['r1','<b>Repouso</b>'+(c?'À direita, ':'')+'STN e GPi hiperativos e sincronizados em beta (13 a 30 Hz, aqui pulsando devagar). O tálamo fica freado.']
+    :['r0','<b>Repouso</b>GPi/SNr inibem o tálamo de forma tônica. Atividade dessincronizada.'];
+}
+function clinic(pd,trem,gainPct){
+  const li=[];
+  if(!pd)li.push('Circuito equilibrado: o comando motor sai com ganho normal. Reduza os neurônios da SNc ou use Lado a lado para ver o desequilíbrio.');
+  else{
+    li.push('Bradicinesia: o último comando chegou ao córtex com '+gainPct+'% do ganho normal, porque o GPi/SNr não pausa o suficiente.');
+    li.push('Rigidez e bradicinesia acompanham a sincronização beta no STN e melhoram quando ela é suprimida por levodopa ou DBS (associação forte; causalidade ainda debatida).');
+    li.push(trem?'Tremor de repouso: o GPi dispara no início do episódio (interruptor) e a alça córtex, ponte, cerebelo, VIM e córtex mantém o ritmo e a amplitude (regulador). Por isso cirurgia tanto nos núcleos da base quanto no circuito cerebelotalâmico suprime o tremor, e o tremor não acompanha a gravidade da bradicinesia. Modelo baseado em estudos de imagem com poucos pacientes.':'Ative o circuito do tremor para ver o segundo circuito (cerebelo, VIM, M1) que sustenta o tremor de repouso.');
+  }
+  if(S.ldopa)li.push('Levodopa: restaura o tônus dopaminérgico no estriado, mas os neurônios da SNc continuam perdidos (os pontos dourados não voltam).');
+  if(S.dbs)li.push('DBS do STN: neste modelo reduz a saída do STN e a sincronização beta. O mecanismo real ainda é discutido (bloqueio, ativação axonal, ruptura do padrão patológico).');
+  return li.map(t=>'<li>'+t+'</li>').join('');
+}
+
+/* ---------------- Atualização visual por instância ---------------- */
+function pathOn(l){
+  if(l.tr&&!(S.tremor||S.path==='tremor'))return false;
+  return S.path==='todas'||l.tags.indexOf(S.path)>=0;
+}
+function nodeFocus(k){
+  if(S.path==='todas')return true;
+  if(k==='str')return nodeFocus('d1')||nodeFocus('d2');
+  return LINKS.some(l=>pathOn(l)&&l.n.indexOf(k)>=0);
+}
+const TREMKEYS={vim:1,cereb:1,pons:1};
+const PALE=new THREE.Color(0xB9B6B0);
+const RED=new THREE.Color(0xFF2D4A),BLUE=new THREE.Color(0x3D7BFF),DIMG=new THREE.Color(0x5A606C);
+function updateInstance(inst,time,dt){
+  const X=inst.model,B=X.B,amp=reduce?.3:.5;
+  const ph={stn:0,gpi:-.4,snr:-.4,gpe:Math.PI*.8,ctx:0,m1:0,thal:-.8};
+  const wgt={stn:1,gpi:1,snr:1,gpe:1,ctx:.5,m1:.5,thal:.4};
+  const mod=k=>wgt[k]!==undefined?1+amp*wgt[k]*B*Math.sin(2*Math.PI*BETAF*time+ph[k]):1;
+  const tremVis=S.tremor||S.path==='tremor';
+  const vis={str:(X.d1+X.d2)/2,d1:X.d1,d2:X.d2,gpe:X.gpe,gpi:X.gpi,stn:X.stn,snr:X.snr,thal:X.thal,ctx:X.m1,vim:X.vim,cereb:X.cereb,snc:X.dN,pons:X.pons,spinal:X.m1};
+  for(const k in inst.nodes){
+    const nd=inst.nodes[k];
+    const a=cl((vis[k]||0)*mod(k==='ctx'?'m1':k),0,1.5);
+    let foc=nodeFocus(k)?1:.22;
+    if(TREMKEYS[k]&&!tremVis)foc=.12;
+    nd.mats.forEach((m,i)=>{
+      if(m.emissiveIntensity!==undefined)m.emissiveIntensity=(inst.kind==='esq'?(.04+.22*a):(.06+.6*a))*foc;
+      if(m.uniforms&&m.uniforms.uO)m.uniforms.uO.value=(.25+.6*a)*foc;
+      if(m.userData.baseOp!==undefined&&!m.uniforms)m.opacity=m.userData.baseOp*(foc<1?.35+.65*foc:1);
+    });
+    nd.glows.forEach(sp=>sp.material.opacity=(inst.kind==='esq'?.1:1)*(.02+.22*a*a)*foc);
+  }
+  if(inst.cells)inst.cells.count=Math.max(0,Math.round(inst.cellsN*cl((X===MAIN?S.dopa:1)-.08)/.92));
+  inst.links.forEach(L=>{
+    const l=L.def;let f;
+    if(l.src==='dopa')f=X.dN*(.85+.15*Math.sin(time*2.3));
+    else f=(X[l.src]||0)*mod(l.src);
+    if(l.src==='stn'&&X===MAIN&&S.dbs)f*=.55;
+    if(l.trg&&tremVis)f+=.9*(X.burst||0);
+    const on=pathOn(l);
+    const show=on?1:(l.tr?0:.08);
+    L.phase+=dt*(reduce?.25:1)*(.3+1.4*cl(f));
+    L.mat.uniforms.uT.value=L.phase;
+    const fc=cl(f);
+    L.mat.uniforms.uI.value=(inst.kind==='esq'?(.12+1.35*Math.pow(fc,1.4)):(.1+1.3*Math.pow(fc,1.4)))*show;
+    L.mat.uniforms.uW.value=inst.kind==='esq'?(fc*.14-.05):(fc*.03-.012);
+    L.mesh.visible=show>0;
+    if(L.under){L.under.visible=show>0;L.under.material.opacity=.85*show;}
+    if(L.head){L.head.visible=show>0;L.extras[0].m.opacity=inst.kind==='esq'?(show>.5?1:.25):.25+.7*show*cl(.35+f);}
+    if(L.signObj){const sv=S.labels&&show>.5;L.signObj.visible=sv;L.signObj.element.style.visibility=sv?'':'hidden';}
+  });
+  inst.labels.forEach(lb=>{
+    if(lb.cls==='ttl'){lb.o.visible=true;lb.el.style.visibility='';return;}
+    if(lb.cls==='sgn')return;
+    let vis=S.labels;if(TREMKEYS[lb.key]&&!tremVis&&lb.cls==='lbl')vis=false;
+    lb.o.visible=vis;lb.el.style.visibility=vis?'':'hidden';
+    lb.el.classList.toggle('dim',!!(!nodeFocus(lb.key)||(TREMKEYS[lb.key]&&!tremVis)));
+  });
+  inst.leaders.forEach(ld=>{ld.line.visible=S.labels&&!(TREMKEYS[ld.key]&&!tremVis);ld.line.material.opacity=nodeFocus(ld.key)?.55:.15;});
+  if(inst.kind==='esq'&&inst.nodes.snc)inst.nodes.snc.mats[0].color.setHex(COL.snc).lerp(PALE,cl(1-X.dN)*.9);
+  inst.rat=inst.rat||{};
+  inst.badges.forEach(b=>{
+    const k=b.key,a=k==='ctx'?X.m1:(k==='snc'?X.dN:X[k]),n=k==='ctx'?NORM.m1:(k==='snc'?NORM.dN:NORM[k]);
+    const r=a/Math.max(.03,n),p=inst.rat[k]===undefined?r:inst.rat[k],v=p+(r-p)*Math.min(1,dt/.8);inst.rat[k]=v;
+    let t='',c='';
+    if(k==='snc'&&v<.6){t='✕ perda de dopamina';c='dn';}
+    else if(v>1.6){t='↑↑';c='up';}else if(v>1.2){t='↑';c='up';}else if(v<.55){t='↓↓';c='dn';}else if(v<.83){t='↓';c='dn';}
+    if(b.t!==t){b.t=t;b.el.textContent=t;b.el.className='bd '+c;b.el.hidden=!t;}
+    if(b.o){b.o.visible=S.labels;b.o.element.style.visibility=S.labels?'':'hidden';}
+    const hyp=cl((v-1.05)/.7),hpo=cl((.95-v)/.5);
+    const fr=inst.frames[k];
+    if(fr){
+      fr.fmat.color.setHex(0xF4F7FB);
+      if(hyp>0)fr.fmat.color.lerp(RED,hyp);else if(hpo>0)fr.fmat.color.lerp(BLUE,hpo);
+      const grow=1+.9*Math.max(hyp,hpo)*(hyp>0?(.85+.15*Math.sin(2*Math.PI*BETAF*time)):1);
+      const q=Q[k];fr.fr.scale.set((q.w+.1*grow*2)/(q.w+.1),(q.h+.1*grow*2)/(q.h+.1),1);
+      if(k!=='snc'){fr.box.color.setHex(COL[k]);if(hpo>0)fr.box.color.lerp(DIMG,hpo*.75);}
+    }
+    if(inst.kind==='real'){
+      const nd=inst.nodes[k];
+      if(nd){
+        nd.glows.forEach(sp=>{if(hyp>0){sp.material.color.setHex(0xff2d4a);sp.material.opacity=.15+.5*hyp;}else sp.material.color.setHex(COL[k]);});
+        if(hpo>0)nd.mats.forEach(m=>{if(m.uniforms&&m.uniforms.uO)m.uniforms.uO.value*=1-.75*hpo;else if(m.emissiveIntensity!==undefined){m.emissiveIntensity*=1-.8*hpo;m.opacity*=1-.6*hpo;}});
+        else if(hyp>0)nd.mats.forEach(m=>{if(m.emissiveIntensity!==undefined)m.emissiveIntensity+=.5*hyp;});
+      }
+    }
+  });
+}
+
+/* ---------------- Laço principal ---------------- */
+function resize(){
+  sizeScope();if(!has3D)return;
+  const r=stage.getBoundingClientRect();if(!r.width||!r.height)return;
+  renderer.setSize(r.width,r.height,false);labelR.setSize(r.width,r.height);
+  camera.aspect=r.width/r.height;camera.updateProjectionMatrix();
+  if(composer)composer.setSize(r.width,r.height);
+  if(lastAspect&&Math.abs(camera.aspect-lastAspect)/lastAspect>.15)fitCamera();
+}
+if(window.ResizeObserver){new ResizeObserver(resize).observe(stage);new ResizeObserver(sizeScope).observe(scope);}
+window.addEventListener('resize',resize);
+resize();
+rebuild();
+
+let last=performance.now(),time=0,uiT=0,lastClin='',tremLvl=0;
+function advance(X,dt,dEff,dNeur,dbs,tremOn,cmdEnv,useBeta){
+  X.dS+=(dEff-X.dS)*Math.min(1,dt/.6);
+  X.dN+=(dNeur-X.dN)*Math.min(1,dt/.6);
+  const pathol=cl((.8-X.dS)/.6),pathN=cl((.8-X.dN)/.6);
+  const tf=tremOn?pathN*(S.ldopa&&X===MAIN?.55:1)*(dbs?.3:1):0;
+  const tt=tf*tremEnv(tremEpT);
+  X.trem+=(tt-X.trem)*Math.min(1,dt/.35);
+  X.burst=tremOn?pathN*burstEnv(tremEpT):0;
+  stepModel(dt,time,X,X.dS,.5+.5*cmdEnv,dbs,X.trem,Math.sin(2*Math.PI*TREMF*time),X.burst);
+  X.B=(useBeta?1:0)*pathol*(1-.3*cmdEnv)*(dbs?.3:1);
+  return {pathol,pathN};
+}
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
+  tremEpT=(tremEpT+dt)%EP;
+  cmdT+=dt;if(S.loop&&cmdT>5&&S.path!=='tremor')fire();
+  const cmdEnv=env(cmdT);
+  const dEff=S.ldopa?Math.max(S.dopa,.74):S.dopa;
+  const st=advance(MAIN,dt,dEff,S.dopa,S.dbs,S.tremor,cmdEnv,S.beta);
+  advance(NORM,dt,1,1,false,false,cmdEnv,S.beta);
+  if(cmdT<2.4)gainPeak=Math.max(gainPeak,MAIN.m1);
+  else if(cmdT<2.5)lastGainPct=Math.round(cl((gainPeak-gainBase)/NORM_GAIN,0,1.5)*100);
+
+  if(has3D){
+    instances.forEach(inst=>updateInstance(inst,time,dt));
+    controls.update();
+    if(composer&&S.view==='real')composer.render();else renderer.render(scene,camera);
+    labelR.render(scene,camera);
+  }
+  pushScope(dt,MAIN.B,cmdEnv,MAIN.dS);drawScope(MAIN.B);
+  if(handG)handG.setAttribute('transform','rotate('+(16*MAIN.trem*Math.sin(2*Math.PI*TREMF*time)).toFixed(1)+' 144 34)');
+
+  uiT+=dt;
+  if(uiT>.08){
+    uiT=0;
+    BARS.forEach(([k])=>{const v=cl(MAIN[k]);barRefs[k].fill.style.width=(v*100).toFixed(1)+'%';barRefs[k].val.textContent=(MAIN[k]*100).toFixed(0);});
+    const ge=document.getElementById('gain');ge.textContent=lastGainPct+'%';ge.style.color=lastGainPct<75?'var(--gaba)':'var(--ok)';
+    document.getElementById('trem').textContent=(MAIN.trem*10).toFixed(1);
+    document.getElementById('betaPow').textContent='beta 13 a 30 Hz: '+(MAIN.B>.5?'alta, sincronizada':MAIN.B>.15?'moderada':'baixa');
+    const pd=st.pathol>.05||st.pathN>.3;
+    const cap=captions(pd);setStep(cap[0]+(S.cmp?'c':''),cap[1]);
+    const c=clinic(st.pathN>.05,S.tremor,lastGainPct);if(c!==lastClin){lastClin=c;document.getElementById('clin').innerHTML=c;}
+  }
+  requestAnimationFrame(frame);
+}
+fire();
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
